@@ -1,0 +1,25 @@
+{
+  "name": "message-manager-gateway",
+  "version": "1.0.0a",
+  "description": "Discord gateway cache utilizing redis and detritus",
+  "author": "AnotherCat <anothercat1259@gmail.com>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "yarn build && node test/test.js",
+    "prepare": "yarn build"
+  },
+  "devDependencies": {
+    "@types/ioredis": "^4.27.8",
+    "typescript": "^4.4.4"
+  },
+  "dependencies": {
+    "detritus-client-socket": "^0.8.3",
+    "discord-api-types": "^0.24.0",
+    "erlpack": "^0.1.3",
+    "ioredis": "^4.28.0"
+  }
+}
