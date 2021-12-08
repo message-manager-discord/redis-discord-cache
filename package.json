@@ -1,5 +1,5 @@
 {
-  "name": "message-manager-gateway",
+  "name": "redis-discord-cache",
   "version": "1.0.0-alpha",
   "description": "Discord gateway cache utilizing redis and detritus",
   "author": "AnotherCat <anothercat1259@gmail.com>",
