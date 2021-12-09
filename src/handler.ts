@@ -22,14 +22,17 @@ import ReJSONCommands from "./redis";
 import Guild, { mergeGuilds, parseGuildData } from "./structures/guild";
 import { mergeChannel, parseChannel } from "./structures/channel";
 import GuildManager from "./guildManager";
+import winston from "winston";
 
 // Design inspired from https://github.com/detritusjs/client/blob/b27cbaa5bfb48506b059be178da0e871b83ba95e/src/gateway/handler.ts#L146
 class GatewayEventHandler {
   private _redis: ReJSONCommands;
+  private _logger: winston.Logger;
   guilds: GuildManager;
 
-  constructor(redis: ReJSONCommands) {
+  constructor(redis: ReJSONCommands, logger: winston.Logger) {
     this._redis = redis;
+    this._logger = logger;
     this.guilds = new GuildManager(redis);
   }
   async [GatewayDispatchEvents.Ready](data: GatewayReadyDispatchData) {
@@ -61,7 +64,7 @@ class GatewayEventHandler {
       } else if (error instanceof GuildUnavailable) {
         await guild.overwrite(newParsedData);
       } else {
-        throw error;
+        this._logger.error(`Error updating guild ${data.id}`, error);
       }
     }
   }
@@ -206,7 +209,7 @@ class GatewayEventHandler {
       if (error instanceof GuildNotFound) {
         return;
       } else {
-        throw error;
+        this._logger.error(`Error syncing threads`, error);
       }
     }
   }
