@@ -1,6 +1,6 @@
 {
   "name": "redis-discord-cache",
-  "version": "1.0.0-alpha.1",
+  "version": "1.0.0-alpha.2",
   "description": "Discord gateway cache utilizing redis and detritus",
   "author": "AnotherCat <anothercat1259@gmail.com>",
   "license": "MIT",
