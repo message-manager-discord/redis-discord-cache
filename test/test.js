@@ -4,7 +4,7 @@ const main = async () => {
   createGatewayConnection({
     redis: { port: 7000 },
     discord: {
-      token: "NzYwNzc4MzcwMTE5NzYxOTIx.X3RAEg.pqNPTHYiHH0UjGQpoAWn-8rXFKA",
+      token: "",
     },
   });
   let name;
