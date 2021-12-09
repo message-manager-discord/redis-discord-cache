@@ -146,7 +146,6 @@ export default class Guild extends BaseStructure<
         path: threadPath,
         value: bigIntStringify(id),
       });
-      console.log(indexCurrentThread);
       if (indexCurrentThread !== -1) {
         // -1 means it's not there
         await this._redis.arrPop({
@@ -341,7 +340,6 @@ const parseGuildData = (
   data: GatewayGuildCreateDispatchData | GatewayGuildUpdateDispatchData,
   clientId: Snowflake
 ): CachedMinimalGuild => {
-  console.log(clientId);
   const botMember = data.members?.filter(
     (member) => member.user?.id === clientId
   );

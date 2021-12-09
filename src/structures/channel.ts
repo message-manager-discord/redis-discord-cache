@@ -80,8 +80,6 @@ const mergeChannel = (
   oldData: CachedMinimalChannel,
   newData: CachedMinimalChannel
 ): CachedMinimalChannel => {
-  console.log(oldData);
-  console.log(newData);
   return {
     threads: oldData.threads, // This is dependent on different events (not the channelUpdate event)
     name: newData.name,

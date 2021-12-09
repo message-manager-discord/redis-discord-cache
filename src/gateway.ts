@@ -36,7 +36,6 @@ const createGatewayConnection = ({
   client.on("packet", async (packet) => {
     if (packet.op === GatewayOpcodes.Dispatch) {
       const { d: data, t: name } = packet;
-      console.log(name);
       if (name in dispatchHandler) {
         try {
           (dispatchHandler as any)[name](data);
