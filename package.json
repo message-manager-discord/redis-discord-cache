@@ -1,6 +1,6 @@
 {
   "name": "redis-discord-cache",
-  "version": "1.0.0-alpha.2",
+  "version": "1.0.0-alpha.3",
   "description": "Discord gateway cache utilizing redis and detritus",
   "author": "AnotherCat <anothercat1259@gmail.com>",
   "license": "MIT",
@@ -25,6 +25,7 @@
     "detritus-client-socket": "^0.8.3",
     "discord-api-types": "^0.24.0",
     "erlpack": "^0.1.3",
-    "ioredis": "^4.28.0"
+    "ioredis": "^4.28.0",
+    "winston": "^3.3.3"
   }
 }
