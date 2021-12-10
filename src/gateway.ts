@@ -40,7 +40,6 @@ const createGatewayConnection = async ({
     presence: {
       status: "online",
     },
-    encoding: "etf",
     intents: GatewayIntents.GUILDS,
   });
 
