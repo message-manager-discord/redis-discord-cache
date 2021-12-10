@@ -14,7 +14,7 @@ This is licensed under the MIT license.
 
 Node version greater than 16 is required.
 
-`yarn add git+https://github.com/message-manager-discord/redis-discord-cache.git`
+`npm i git+https://github.com/message-manager-discord/redis-discord-cache.git`
 
 ## Documentation
 
