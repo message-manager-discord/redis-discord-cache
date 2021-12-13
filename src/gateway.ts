@@ -28,7 +28,7 @@ const createGatewayConnection = async ({
   redis,
   discord,
   logger,
-}: CreateGatewayConnectionOptions) => {
+}: CreateGatewayConnectionOptions): Promise<Gateway.Socket> => {
   if (!logger) {
     logger = createDefaultLogger();
   }
@@ -113,6 +113,7 @@ const createGatewayConnection = async ({
   );
 
   client.connect("wss://gateway.discord.gg/");
+  return client;
 };
 
 /*
