@@ -101,6 +101,35 @@ class ReJSONCommands {
   }): Promise<number> {
     return this._sendCommand("JSON.ARRPOP", [key, path, index]);
   }
+  async scan({
+    cursor,
+    pattern,
+  }: {
+    cursor: string;
+    pattern: string;
+  }): Promise<ScanReturn> {
+    const data = await this._sendCommand("SCAN", [cursor, "MATCH", pattern]);
+    return {
+      cursor: data[0],
+      keys: data[1],
+    };
+  }
+  async scanAll({ pattern }: { pattern: string }): Promise<string[]> {
+    let cursor = "0";
+    let keys: string[] = [];
+    let data: ScanReturn;
+    do {
+      data = await this.scan({ cursor, pattern });
+      cursor = data.cursor;
+      keys = keys.concat(data.keys);
+    } while (cursor !== "0");
+    return keys;
+  }
+}
+
+interface ScanReturn {
+  cursor: string;
+  keys: string[];
 }
 
 export default ReJSONCommands;

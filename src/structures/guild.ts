@@ -391,4 +391,55 @@ const mergeGuilds = (
     roles: newData.roles,
   };
 };
-export { mergeGuilds, parseGuildData };
+
+const insertGuildIntoShardArray = async ({
+  guildId,
+  shardId,
+  redis,
+}: {
+  guildId: Snowflake;
+  shardId: number;
+  redis: ReJSONCommands;
+}) => {
+  const indexGuild = await redis.arrIndex({
+    key: `shard:${shardId}`,
+    value: bigIntStringify(guildId),
+  });
+  if (indexGuild === -1) {
+    // -1 means it's not there
+    await redis.arrAppend({
+      key: `shard:${shardId}`,
+      value: bigIntStringify(guildId),
+    });
+  }
+};
+
+const removeGuildFromShardArray = async ({
+  guildId,
+  shardId,
+  redis,
+}: {
+  guildId: Snowflake;
+  shardId: number;
+  redis: ReJSONCommands;
+}) => {
+  const indexGuild = await redis.arrIndex({
+    key: `shard:${shardId}`,
+    value: bigIntStringify(guildId),
+  });
+  if (indexGuild !== -1) {
+    // -1 means it's not there
+
+    await redis.arrPop({
+      key: `shard:${shardId}`,
+      index: bigIntStringify(indexGuild),
+    });
+  }
+};
+
+export {
+  mergeGuilds,
+  parseGuildData,
+  removeGuildFromShardArray,
+  insertGuildIntoShardArray,
+};

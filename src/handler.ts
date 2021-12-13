@@ -16,34 +16,72 @@ import {
   GatewayThreadListSyncDispatchData,
   GatewayGuildMemberUpdateDispatchData,
 } from "discord-api-types/gateway/v9";
+import { Snowflake } from "discord-api-types/v9";
 import { GuildNotFound, GuildUnavailable } from "./errors";
 import ReJSONCommands from "./redis";
 
-import Guild, { mergeGuilds, parseGuildData } from "./structures/guild";
+import Guild, {
+  insertGuildIntoShardArray,
+  mergeGuilds,
+  parseGuildData,
+  removeGuildFromShardArray,
+} from "./structures/guild";
 import { mergeChannel, parseChannel } from "./structures/channel";
 import GuildManager from "./guildManager";
 import winston from "winston";
+import { bigIntParse, bigIntStringify } from "./json";
+import { Socket } from "detritus-client-socket/lib/gateway";
 
 // Design inspired from https://github.com/detritusjs/client/blob/b27cbaa5bfb48506b059be178da0e871b83ba95e/src/gateway/handler.ts#L146
 class GatewayEventHandler {
   private _redis: ReJSONCommands;
   private _logger: winston.Logger;
+  private _shardId: number;
   guilds: GuildManager;
 
-  constructor(redis: ReJSONCommands, logger: winston.Logger) {
+  constructor(redis: ReJSONCommands, logger: winston.Logger, shardId: number) {
     this._redis = redis;
     this._logger = logger;
+    this._shardId = shardId;
     this.guilds = new GuildManager(redis);
   }
-  async [GatewayDispatchEvents.Ready](data: GatewayReadyDispatchData) {
+  async [GatewayDispatchEvents.Ready](
+    data: GatewayReadyDispatchData,
+    client: Socket
+  ) {
+    const newShardGuilds = data.guilds.map((guild) => guild.id);
+    console.log(`${this._shardId} - ${data.guilds?.length} guilds`);
+    const previousShardGuilds = bigIntParse(
+      await this._redis.get({ key: `shard:${this._shardId}` })
+    ) as Snowflake[] | null;
+    // This is incase any guilds were deleted while the process was offline
+    // and thus they should be deleted from the cache
+    if (previousShardGuilds) {
+      const deletedGuilds = previousShardGuilds.filter((guildId) => {
+        return !newShardGuilds.includes(guildId);
+      });
+      deletedGuilds.forEach(async (guildId) => {
+        await this._redis.delete({ key: `guild:${guildId}` });
+      });
+    }
+    await this._redis.set({
+      key: `shard:${this._shardId}`,
+      value: bigIntStringify(newShardGuilds),
+    });
     data.guilds.forEach(async (guild) => {
       await Guild.saveNewUnavailable(guild, { redis: this._redis });
     });
     this._redis.clientId = data.user.id;
+    client.emit("readyParsed"); // So events are not processed until ready
   }
   async [GatewayDispatchEvents.GuildCreate](
     data: GatewayGuildCreateDispatchData
   ) {
+    await insertGuildIntoShardArray({
+      guildId: data.id,
+      shardId: this._shardId,
+      redis: this._redis,
+    });
     await Guild.saveNew(data, { redis: this._redis });
   }
   async [GatewayDispatchEvents.GuildUpdate](
@@ -72,8 +110,15 @@ class GatewayEventHandler {
     data: GatewayGuildDeleteDispatchData
   ) {
     if (data.unavailable) {
+      // Guild is unavailable
       await Guild.saveNewUnavailable(data, { redis: this._redis });
     } else {
+      // Left guild or deleted guild
+      await removeGuildFromShardArray({
+        guildId: data.id,
+        shardId: this._shardId,
+        redis: this._redis,
+      });
       await this.guilds.getGuild(data.id).delete("."); // This won't error even if it can't be found
     }
   }
