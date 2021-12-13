@@ -24,6 +24,7 @@ Two functions are exposed by the library, these create a gateway connect and con
 
 `createGatewayConnection`
 This connects to the discord gateway and populates the redis cache. Only one instance should be created.
+This returns a promise that resolves to the detritus gateway connection instance.
 
 This function takes three options:
 
