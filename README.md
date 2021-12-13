@@ -34,6 +34,8 @@ This function takes three options:
 
   - token: The token of the discord bot.
   - presence: An object containing the presence information for the bot. See the [detritusjs docs for more info](https://socket.detritusjs.com/interfaces/gateway.presenceoptions)
+  - shardId: id of shard, see [discord docs](https://discord.com/developers/docs/topics/gateway#sharding) for more info
+  - shardCount: total number of shards
 
 - logger: A winston logger instance. This is optional and will [default](https://github.com/message-manager-discord/redis-discord-cache/blob/main/src/logger.ts) to a console logger with the level INFO if not provided and will catch exceptions. Pass a [winston logger instance](https://github.com/winstonjs/winston#creating-your-own-logger) to have more control over output and log levels.
 
@@ -47,3 +49,8 @@ This function has two parameters:
 - port: The port of the redis instance.
 - host: The hostname of the redis instance.
 - logger: A winston logger instance. (same as above)
+
+### Notes on sharding
+
+When a gateway connection is started it stores which guild were on which shard. This is used in ensuring that no stale data persists (in the case of a guild deletion during an outage). However since the calculation that determines which shard a guild is on changes when the shard count changes, this will mean that guilds that are now on different shards will be considered 'deleted' and get deleted. Therefore when changing the shard count, you **must** recommended to flush the cache. Do this with `clearCache(...)` or the redis command `FLUSHDB`. This will ensure that the cache is empty and all guilds are on the correct shard. This also does not have any negative effects on startup performance, as all guild get reset on startup anyways.  
+An error will be thrown if the cache is not flushed when changing the shard count.
