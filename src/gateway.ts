@@ -105,7 +105,7 @@ class GatewayClient {
             this.logger.error(`Error handling event ${name}`, error);
           }
           return;
-        } else if (!this.clientId) {
+        } else if (!this.isReady) {
           this.logger.debug(
             `Waiting for ready to handle websocket event ${name}`
           );
@@ -187,6 +187,10 @@ class GatewayClient {
     return this.redisCommands.nonJSONget({
       key: `shard:${this.shardId || 0}:guildCount`,
     });
+  }
+
+  get isReady() {
+    return !!this.clientId;
   }
 }
 
