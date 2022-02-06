@@ -88,6 +88,10 @@ class GatewayEventHandler {
   async [GatewayDispatchEvents.GuildCreate](
     data: GatewayGuildCreateDispatchData
   ) {
+    await Guild.saveNew(data, { redis: this._redis, client: this.client });
+    // This command must be first. This is because a GUILD_MEMBER_UPDATE is sent immediately after
+    // the GUILD_CREATE event. Due to the async nature of handling if this command is not sent first,
+    // the member roles will be attempted to be updated on the guild before the guild is created.
     await insertGuildIntoShardArray({
       guildId: data.id,
       shardId: this._shardId,
@@ -95,7 +99,6 @@ class GatewayEventHandler {
     });
 
     await this._redis.nonJSONincr({ key: `shard:${this._shardId}:guildCount` });
-    await Guild.saveNew(data, { redis: this._redis, client: this.client });
   }
   async [GatewayDispatchEvents.GuildUpdate](
     data: GatewayGuildUpdateDispatchData
