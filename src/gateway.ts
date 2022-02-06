@@ -183,10 +183,12 @@ class GatewayClient {
     this.client.connect("wss://gateway.discord.gg/");
   }
 
-  getGuildCount(): Promise<number> {
-    return this.redisCommands.nonJSONget({
-      key: `shard:${this.shardId || 0}:guildCount`,
-    });
+  async getGuildCount(): Promise<number> {
+    return JSON.parse(
+      await this.redisCommands.nonJSONget({
+        key: `shard:${this.shardId || 0}:guildCount`,
+      })
+    );
   }
 
   get isReady() {
