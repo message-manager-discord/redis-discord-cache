@@ -1,5 +1,5 @@
 const {
-  createGatewayConnection,
+  GatewayClient,
   createRedisClient,
   clearGuildsAboveShardCount,
 } = require("../dist/index");
@@ -21,60 +21,15 @@ const main = async () => {
   });
 
   const token = "";
-
-  await createGatewayConnection({
-    redis: { port: 7000 },
+  const client = new GatewayClient({
+    redis: { port: 6378 },
     discord: {
       token: token,
-      shardCount: 4,
+      shardCount: 1,
       shardId: 0,
     },
     logger,
   });
-  logger.info("waiting for 6 seconds");
-  await new Promise((resolve) => setTimeout(resolve, 6000));
-  logger.info("finished waiting");
-  await createGatewayConnection({
-    redis: { port: 7000 },
-    discord: {
-      token: token,
-      shardCount: 4,
-      shardId: 1,
-    },
-    logger,
-  });
-  logger.info("waiting for 6 seconds");
-  await new Promise((resolve) => setTimeout(resolve, 6000));
-  logger.info("finished waiting");
-  await createGatewayConnection({
-    redis: { port: 7000 },
-    discord: {
-      token: token,
-      shardCount: 4,
-      shardId: 2,
-    },
-    logger,
-  });
-  logger.info("waiting for 6 seconds");
-  await new Promise((resolve) => setTimeout(resolve, 6000));
-  logger.info("finished waiting");
-  await createGatewayConnection({
-    redis: { port: 7000 },
-    discord: {
-      token: token,
-      shardCount: 4,
-      shardId: 3,
-    },
-    logger,
-  });
-  let name;
-  const guildManager = createRedisClient({ port: 7000, logger });
-  while (!name) {
-    try {
-      name = await guildManager.getGuild("").name; // Should Throw
-    } catch (e) {}
-  }
-  console.log(name);
-  process.exit(0);
+  await client.connect();
 };
 main();

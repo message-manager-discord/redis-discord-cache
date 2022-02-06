@@ -27,7 +27,8 @@ import {
 const _structureName = "guild";
 import { GuildNotFound, GuildUnavailable } from "../errors";
 import { parseChannel, parseChannels, parseThreadChannel } from "./channel";
-import { bigIntParse, bigIntStringify } from "../json";
+import { bigIntStringify } from "../json";
+import GatewayClient from "../gateway";
 
 export default class Guild extends BaseStructure<
   Snowflake,
@@ -49,12 +50,12 @@ export default class Guild extends BaseStructure<
   }
   static saveNew(
     data: GatewayGuildCreateDispatchData,
-    { redis }: { redis: ReJSONCommands }
+    { redis, client }: { redis: ReJSONCommands; client: GatewayClient }
   ) {
     return this._baseSave(
       parseGuildData(
         data,
-        redis.clientId! // Must be set as READY event was received
+        client.clientId! // Must be set as READY event was received
       ),
       data.id,
       {
@@ -343,7 +344,8 @@ const parseGuildData = (
   const botMember = data.members?.filter(
     (member) => member.user?.id === clientId
   );
-  const botMemberRoles = botMember ? botMember[0].roles : []; // Bot
+  const botMemberRoles =
+    botMember && botMember.length > 1 ? botMember[0].roles : [];
 
   const strippedDownData: CachedMinimalGuild = {
     unavailable: false,
