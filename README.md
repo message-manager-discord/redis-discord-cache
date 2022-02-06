@@ -18,15 +18,15 @@ Node version greater than 16 is required.
 
 ## Documentation
 
-Two functions are exposed by the library, these create a gateway connect and connect to the cache.
+Two methods of connecting are exposed by the library, these create a gateway connect and connect to the cache.
 
 ### Gateway Connect
 
-`createGatewayConnection`
+`GatewayClient`
 This connects to the discord gateway and populates the redis cache. Only one instance should be created.
 This returns a promise that resolves to the detritus gateway connection instance.
 
-This function takes three options:
+This class takes four options:
 
 - redis: An object containing the redis connection information.
   - port: The port of the redis instance.
@@ -39,6 +39,12 @@ This function takes three options:
   - shardCount: total number of shards
 
 - logger: A winston logger instance. This is optional and will [default](https://github.com/message-manager-discord/redis-discord-cache/blob/main/src/logger.ts) to a console logger with the level INFO if not provided and will catch exceptions. Pass a [winston logger instance](https://github.com/winstonjs/winston#creating-your-own-logger) to have more control over output and log levels.
+
+- metrics: An object containing metric event handlers
+  - onGatewayEvent: A function that will be called when a gateway event is received. takes a single argument of an object containing {name: string}
+  - onRedisCommand: A function that will be called when a redis command is sent. takes a single argument of an object containing {name: string}
+
+After creating an instance you will then need to call `connect` to connect to the gateway.
 
 ### Redis Client
 

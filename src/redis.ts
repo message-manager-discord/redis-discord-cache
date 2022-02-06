@@ -7,19 +7,32 @@ const makeGuildKey = (guildId: Snowflake) => `guild:${guildId}`;
 class ReJSONCommands {
   private redis: Redis;
   private logger: winston.Logger;
-  clientId: Snowflake | null;
+  private onCommand: ((options: { name: string }) => any) | undefined;
 
-  constructor(redis: Redis, logger: winston.Logger) {
+  constructor(
+    redis: Redis,
+    logger: winston.Logger,
+    onCommand?: (({ name }: { name: string }) => any) | undefined
+  ) {
     this.redis = redis;
-    this.clientId = null;
+
     this.logger = logger;
+    this.onCommand = onCommand;
   }
   private async _sendCommand(command: string, ...args: any[]): Promise<any> {
     this.logger.debug(`Sending redis command: ${command} with args: ${args}`);
+
     const data = await this.redis.send_command(command, ...args);
     this.logger.debug(
       `Received data: ${data} from redis command: ${command} with args ${args}`
     );
+    try {
+      if (this.onCommand) {
+        this.onCommand({ name: command });
+      }
+    } catch (e) {
+      this.logger.error(e);
+    } // This function is user provided
     return data;
   }
 
@@ -124,6 +137,18 @@ class ReJSONCommands {
       keys = keys.concat(data.keys);
     } while (cursor !== "0");
     return keys;
+  }
+  async nonJSONset({ key, value }: { key: string; value: any }) {
+    return this._sendCommand("SET", [key, value]);
+  }
+  async nonJSONget({ key }: { key: string }) {
+    return this._sendCommand("GET", [key]);
+  }
+  async nonJSONincr({ key }: { key: string }) {
+    await this._sendCommand("INCR", [key]);
+  }
+  async nonJSONdecr({ key }: { key: string }) {
+    return this._sendCommand("DECR", [key]);
   }
 }
 

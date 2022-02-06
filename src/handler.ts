@@ -31,18 +31,26 @@ import GuildManager from "./guildManager";
 import winston from "winston";
 import { bigIntParse, bigIntStringify } from "./json";
 import { Socket } from "detritus-client-socket/lib/gateway";
+import GatewayClient from "./gateway";
 
 // Design inspired from https://github.com/detritusjs/client/blob/b27cbaa5bfb48506b059be178da0e871b83ba95e/src/gateway/handler.ts#L146
 class GatewayEventHandler {
   private _redis: ReJSONCommands;
   private _logger: winston.Logger;
   private _shardId: number;
+  client: GatewayClient;
   guilds: GuildManager;
 
-  constructor(redis: ReJSONCommands, logger: winston.Logger, shardId: number) {
+  constructor(
+    client: GatewayClient,
+    redis: ReJSONCommands,
+    logger: winston.Logger,
+    shardId: number
+  ) {
     this._redis = redis;
     this._logger = logger;
     this._shardId = shardId;
+    this.client = client;
     this.guilds = new GuildManager(redis);
   }
   async [GatewayDispatchEvents.Ready](
@@ -50,7 +58,6 @@ class GatewayEventHandler {
     client: Socket
   ) {
     const newShardGuilds = data.guilds.map((guild) => guild.id);
-    console.log(`${this._shardId} - ${data.guilds?.length} guilds`);
     const previousShardGuilds = bigIntParse(
       await this._redis.get({ key: `shard:${this._shardId}` })
     ) as Snowflake[] | null;
@@ -71,7 +78,11 @@ class GatewayEventHandler {
     data.guilds.forEach(async (guild) => {
       await Guild.saveNewUnavailable(guild, { redis: this._redis });
     });
-    this._redis.clientId = data.user.id;
+    await this._redis.nonJSONset({
+      key: `shard:${this._shardId}:guildCount`,
+      value: 0, // This will be updated to the correct value when receiving GuildCreate events
+    });
+    this.client.clientId = data.user.id;
     client.emit("readyParsed"); // So events are not processed until ready
   }
   async [GatewayDispatchEvents.GuildCreate](
@@ -82,7 +93,9 @@ class GatewayEventHandler {
       shardId: this._shardId,
       redis: this._redis,
     });
-    await Guild.saveNew(data, { redis: this._redis });
+
+    await this._redis.nonJSONincr({ key: `shard:${this._shardId}:guildCount` });
+    await Guild.saveNew(data, { redis: this._redis, client: this.client });
   }
   async [GatewayDispatchEvents.GuildUpdate](
     data: GatewayGuildUpdateDispatchData
@@ -90,7 +103,7 @@ class GatewayEventHandler {
     const guild = this.guilds.getGuild(data.id);
     const newParsedData = parseGuildData(
       data,
-      this._redis.clientId! // Must be set as READY event was received
+      this.client.clientId! // Must be set as READY event was received
     );
     try {
       const oldData = await guild.toStatic();
@@ -98,11 +111,22 @@ class GatewayEventHandler {
       await guild.overwrite(newData);
     } catch (error) {
       if (error instanceof GuildNotFound) {
-        await Guild.saveNew(data, { redis: this._redis });
+        await Guild.saveNew(data, { redis: this._redis, client: this.client });
+        await this._redis.nonJSONincr({
+          key: `shard:${this._shardId}:guildCount`,
+        });
       } else if (error instanceof GuildUnavailable) {
         await guild.overwrite(newParsedData);
+        await this._redis.nonJSONincr({
+          key: `shard:${this._shardId}:guildCount`,
+        });
+        // Unavailable guilds are not counted in the guild count since that would mean an addition call
+        // on guild create to check if it was a new guild or an unavailable guild made available
       } else {
         this._logger.error(`Error updating guild ${data.id}`, error);
+      }
+      if (data.id === "796460453248368732") {
+        console.log(JSON.stringify(data));
       }
     }
   }
@@ -121,6 +145,8 @@ class GatewayEventHandler {
       });
       await this.guilds.getGuild(data.id).delete("."); // This won't error even if it can't be found
     }
+
+    await this._redis.nonJSONdecr({ key: `shard:${this._shardId}:guildCount` });
   }
 
   async [GatewayDispatchEvents.ChannelCreate](
@@ -262,7 +288,7 @@ class GatewayEventHandler {
     data: GatewayGuildMemberUpdateDispatchData
   ) {
     // If clientId on _redis is not the same as the id on the data, then the event is not for the bot process and therefore should be ignored
-    if (this._redis.clientId !== data.user.id) {
+    if (this.client.clientId !== data.user.id) {
       return;
     }
     // This will only contain the bot's roles since the members privileged intent should be disabled
