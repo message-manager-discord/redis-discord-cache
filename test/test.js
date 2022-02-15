@@ -31,5 +31,10 @@ const main = async () => {
     logger,
   });
   await client.connect();
+  logger.info("waiting for 20 seconds");
+  await new Promise((resolve) => setTimeout(resolve, 20000));
+  logger.info("finished waiting");
+  const GuildManager = createRedisClient({ port: 6378, logger });
+  console.log(await GuildManager.getGuildCount());
 };
 main();
