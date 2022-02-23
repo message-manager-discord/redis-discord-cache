@@ -1,10 +1,24 @@
 import {
-  APIOverwrite,
+  APIGuildCategoryChannel,
+  APIGuildChannel,
+  APIGuildStoreChannel,
+  APINewsChannel,
+  APITextChannel,
+  APIThreadChannel,
+  APIVoiceChannel,
   ChannelType,
   OverwriteType,
-  Permissions,
   Snowflake,
 } from "discord-api-types/v9";
+
+type GuildChannel =
+  | APITextChannel
+  | APINewsChannel
+  | APIGuildStoreChannel
+  | APIVoiceChannel
+  | APIGuildCategoryChannel
+  | APIThreadChannel
+  | APINewsChannel;
 
 type CachedMinimalRole = {
   name: string;
@@ -116,4 +130,5 @@ export {
   ChannelOverwrite,
   ChannelOverwritesObject,
   UnavailableGuild,
+  GuildChannel,
 };

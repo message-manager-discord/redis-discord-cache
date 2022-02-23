@@ -1,11 +1,12 @@
-import { APIChannel, Snowflake } from "discord-api-types/v9";
+import { APIThreadChannel, Snowflake } from "discord-api-types/v9";
 import {
   CachedChannelsObject,
   CachedMinimalChannel,
   ChannelOverwritesObject,
+  GuildChannel,
 } from "./types";
 
-const parseChannel = (channel: APIChannel): CachedMinimalChannel => ({
+const parseChannel = (channel: GuildChannel): CachedMinimalChannel => ({
   name: channel.name,
   parent_id: channel.parent_id,
   permission_overwrites: channel.permission_overwrites?.reduce(
@@ -25,7 +26,9 @@ const parseChannel = (channel: APIChannel): CachedMinimalChannel => ({
   threads: [],
 });
 
-const parseThreadChannel = (thread: APIChannel): CachedMinimalChannel => ({
+const parseThreadChannel = (
+  thread: APIThreadChannel
+): CachedMinimalChannel => ({
   name: thread.name,
   parent_id: thread.parent_id,
   archived: thread.thread_metadata?.archived,
@@ -34,8 +37,8 @@ const parseThreadChannel = (thread: APIChannel): CachedMinimalChannel => ({
 });
 
 const parseChannels = (
-  channelsData?: APIChannel[],
-  threadsData?: APIChannel[]
+  channelsData?: GuildChannel[],
+  threadsData?: APIThreadChannel[]
 ): CachedChannelsObject => {
   let channels: CachedChannelsObject = {};
   if (threadsData) {

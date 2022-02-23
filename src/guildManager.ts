@@ -1,4 +1,4 @@
-import { Snowflake } from "discord-api-types";
+import { Snowflake } from "discord-api-types/v9";
 import { bigIntParse } from "./json";
 import ReJSONCommands from "./redis";
 import Guild from "./structures/guild";

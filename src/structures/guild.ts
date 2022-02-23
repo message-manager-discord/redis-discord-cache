@@ -8,6 +8,7 @@ import {
   Snowflake,
   APIRole,
   MembershipScreeningFieldType,
+  APIThreadChannel,
 } from "discord-api-types/v9";
 import ReJSONCommands from "../redis";
 import BaseStructure, { makeStructureKey } from "./base";
@@ -19,6 +20,7 @@ import {
   CachedMinimalRole,
   CachedRolesObject,
   ChannelsObject,
+  GuildChannel,
   MinimalChannel,
   MinimalRole,
   RolesObject,
@@ -88,7 +90,7 @@ export default class Guild extends BaseStructure<
     }
   }
 
-  async saveNewChannel(data: GatewayChannelCreateDispatchData): Promise<any> {
+  async saveNewChannel(data: GuildChannel): Promise<any> {
     try {
       return await this.setValue({
         path: `channels["${data.id}"]`,
@@ -352,7 +354,10 @@ const parseGuildData = (
     name: data.name,
     icon: data.icon,
     owner_id: data.owner_id,
-    channels: parseChannels(data.channels, data.threads),
+    channels: parseChannels(
+      data.channels as GuildChannel[] | undefined,
+      data.threads as APIThreadChannel[] | undefined
+    ),
     roles: parseRolesData(data.roles),
     botMemberRoles,
   };

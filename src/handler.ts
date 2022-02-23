@@ -16,7 +16,7 @@ import {
   GatewayThreadListSyncDispatchData,
   GatewayGuildMemberUpdateDispatchData,
 } from "discord-api-types/gateway/v9";
-import { Snowflake } from "discord-api-types/v9";
+import { Snowflake, ChannelType, APIThreadChannel } from "discord-api-types/v9";
 import { GuildNotFound, GuildUnavailable } from "./errors";
 import ReJSONCommands from "./redis";
 
@@ -155,7 +155,11 @@ class GatewayEventHandler {
   async [GatewayDispatchEvents.ChannelCreate](
     data: GatewayChannelCreateDispatchData
   ) {
-    if (!data.guild_id) {
+    if (
+      data.type === ChannelType.DM ||
+      data.type === ChannelType.GroupDM ||
+      !data.guild_id
+    ) {
       return; // DMs are not used and therefore would be a waste of memory
     }
     await this.guilds.getGuild(data.guild_id).saveNewChannel(data);
@@ -164,7 +168,11 @@ class GatewayEventHandler {
     data: GatewayChannelUpdateDispatchData
   ) {
     // Overwrite since all data used is included
-    if (!data.guild_id) {
+    if (
+      data.type === ChannelType.DM ||
+      data.type === ChannelType.GroupDM ||
+      !data.guild_id
+    ) {
       return; // DMs are not used and therefore would be a waste of memory
     }
     const guild = this.guilds.getGuild(data.guild_id);
@@ -189,7 +197,11 @@ class GatewayEventHandler {
   async [GatewayDispatchEvents.ChannelDelete](
     data: GatewayChannelDeleteDispatchData
   ) {
-    if (!data.guild_id) {
+    if (
+      data.type === ChannelType.DM ||
+      data.type === ChannelType.GroupDM ||
+      !data.guild_id
+    ) {
       return; // DMs are not used and therefore would be a waste of memory
     }
     await this.guilds.getGuild(data.guild_id).deleteChannel(data.id);
@@ -224,16 +236,27 @@ class GatewayEventHandler {
   async [GatewayDispatchEvents.ThreadUpdate](
     data: GatewayThreadUpdateDispatchData
   ) {
-    if (!data.guild_id) {
-      return; // This should never happen but whatever
+    if (
+      data.type === ChannelType.DM ||
+      data.type === ChannelType.GroupDM ||
+      !data.guild_id
+    ) {
+      return; // DMs are not used and therefore would be a waste of memory
     }
-    await this.guilds.getGuild(data.guild_id).saveNewThread(data);
+
+    await this.guilds
+      .getGuild(data.guild_id)
+      .saveNewThread(data as APIThreadChannel);
   }
   async [GatewayDispatchEvents.ThreadDelete](
     data: GatewayThreadDeleteDispatchData
   ) {
-    if (!data.guild_id) {
-      return; // This should never happen but whatever
+    if (
+      data.type === ChannelType.DM ||
+      data.type === ChannelType.GroupDM ||
+      !data.guild_id
+    ) {
+      return; // DMs are not used and therefore would be a waste of memory
     }
     await this.guilds.getGuild(data.guild_id).deleteThread(
       data.id,
@@ -277,7 +300,7 @@ class GatewayEventHandler {
       }
 
       for (const thread of data.threads) {
-        await guild.saveNewThread(thread);
+        await guild.saveNewThread(thread as APIThreadChannel);
       }
     } catch (error) {
       if (error instanceof GuildNotFound) {
