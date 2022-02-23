@@ -19,11 +19,11 @@
   },
   "devDependencies": {
     "@types/ioredis": "^4.27.8",
+    "discord-api-types": "^0.27.2",
     "typescript": "^4.4.4"
   },
   "dependencies": {
     "detritus-client-socket": "^0.8.3",
-    "discord-api-types": "^0.24.0",
     "ioredis": "^4.28.0",
     "winston": "^3.3.3"
   }
