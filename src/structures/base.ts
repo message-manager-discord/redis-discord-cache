@@ -22,9 +22,16 @@ export const makeStructureKey = (
   structureId: Snowflake
 ) => `${structureName}:${structureId}`;
 
+interface CachedCommand {
+  result: string;
+  time: number;
+}
+
 export default abstract class BaseStructure<Key, Value> {
   readonly _redis: ReJSONCommands;
   abstract readonly _structureName: string; // MUST be set by
+
+  _cachedValues: Record<string, CachedCommand> = {}; // This cache works of the assumption that guild objects will be short lived
 
   id: Snowflake;
   constructor(id: Snowflake, { redis }: { redis: ReJSONCommands }) {
@@ -37,13 +44,35 @@ export default abstract class BaseStructure<Key, Value> {
       key: makeStructureKey(this._structureName, this.id),
     });
   }
+
+  private async _checkTimestampCached(
+    name: string,
+    data: CachedCommand
+  ): Promise<void> {
+    const now = Date.now();
+    if (now - data.time > 1000 * 15) {
+      // max cached for 15 seconds
+      // Cache expired
+      delete this._cachedValues[name];
+    }
+  }
   async get(path: string | string[]): Promise<any> {
-    return bigIntParse(
-      await this._redis.get({
+    const pathAsString = typeof path === "string" ? path : path.join(".");
+    if (pathAsString in this._cachedValues) {
+      const cached = this._cachedValues[pathAsString];
+      this._checkTimestampCached(pathAsString, cached); // We don't care about the result of this
+      return bigIntParse(cached.result);
+    } else {
+      const data = await this._redis.get({
         key: `${this._structureName}:${this.id}`,
         path,
-      })
-    );
+      });
+      this._cachedValues[pathAsString] = {
+        result: data,
+        time: Date.now(),
+      };
+      return bigIntParse(data);
+    }
   }
 
   async delete(path: string | string[]): Promise<void> {
