@@ -197,6 +197,10 @@ export default class Guild extends BaseStructure<
     }
   }
 
+  get clientId(): Promise<string> {
+    return this.get(`clientId`);
+  }
+
   get name(): Promise<string> {
     return this.get(`name`);
   }
@@ -269,16 +273,19 @@ export default class Guild extends BaseStructure<
   }
 
   // https://discord.com/developers/docs/topics/permissions#permission-overwrites
-  async calculateGuildPermissions(member: APIGuildMember): Promise<bigint> {
-    if (member.user?.id === (await this.ownerId)) {
+  async calculateGuildPermissions(
+    userId: Snowflake,
+    roles: Snowflake[]
+  ): Promise<bigint> {
+    if (userId === (await this.ownerId)) {
       return PERMISSIONS_ALL;
     }
-    const allRoles = await this.getRoles(member.roles.concat([this.id]));
+    const allRoles = await this.getRoles(roles.concat([this.id]));
     if (!allRoles) return Permissions.NONE;
     const everyoneRole = allRoles[this.id];
     let permissions = Permissions.NONE;
     if (everyoneRole) permissions = everyoneRole.permissions;
-    member.roles.forEach((roleId) => {
+    roles.forEach((roleId) => {
       const role = allRoles[roleId];
       if (role) {
         permissions |= role.permissions;
@@ -292,16 +299,27 @@ export default class Guild extends BaseStructure<
     }
     return permissions;
   }
+
+  async calculateBotGuildPermissions(): Promise<bigint> {
+    const botId = await this.clientId;
+    const botMemberRoles = await this.botMemberRoles;
+    return await this.calculateGuildPermissions(botId, botMemberRoles);
+  }
+
   // https://discord.com/developers/docs/topics/permissions#permission-overwrites
   async calculateChannelPermissions(
-    member: APIGuildMember,
+    userId: Snowflake,
+    roles: Snowflake[],
     channelId: Snowflake
   ): Promise<bigint> {
     const channel = await this.getChannel(channelId);
     if (!channel) {
       throw new Error("Channel not cached!");
     }
-    const guildPermissions = await this.calculateGuildPermissions(member);
+    const guildPermissions = await this.calculateGuildPermissions(
+      userId,
+      roles
+    );
     if (
       (guildPermissions & Permissions.ADMINISTRATOR) ===
       Permissions.ADMINISTRATOR
@@ -320,7 +338,7 @@ export default class Guild extends BaseStructure<
     let overwritesAllow = Permissions.NONE;
     let overwritesDeny = Permissions.NONE;
 
-    member.roles.forEach((roleId) => {
+    roles.forEach((roleId) => {
       const overwriteRole = overwrites[roleId];
       if (overwriteRole) {
         overwritesAllow |= overwriteRole.allow;
@@ -330,12 +348,21 @@ export default class Guild extends BaseStructure<
     total &= ~overwritesDeny;
     total |= overwritesAllow;
 
-    const memberOverwrite = overwrites[member.user!.id]; // User exists since this is not used on MESSAGE_CREATE events
+    const memberOverwrite = overwrites[userId]; // User exists since this is not used on MESSAGE_CREATE events
     if (memberOverwrite) {
       total &= ~memberOverwrite.deny;
       total |= memberOverwrite.allow;
     }
     return total;
+  }
+  async calculateBotChannelPermissions(channelId: Snowflake): Promise<bigint> {
+    const botId = await this.clientId;
+    const botMemberRoles = await this.botMemberRoles;
+    return await this.calculateChannelPermissions(
+      botId,
+      botMemberRoles,
+      channelId
+    );
   }
 }
 
