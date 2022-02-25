@@ -85,6 +85,7 @@ class GatewayClient {
       this.shardId
     );
     this.clientId = null;
+    this.redisCommands.delete({ key: "clientId" });
     this._eventsPendingReady = [];
     if (metrics) {
       if (metrics.onGatewayEvent) {
@@ -175,12 +176,14 @@ class GatewayClient {
     this.client.on("reconnecting", (event) => {
       this.logger.info(`Client reconnecting on shard: ${this.shardId}`, event);
       this.clientId = null;
+
+      this.redisCommands.delete({ key: "clientId" });
     });
     this.client.on("warn", (error) =>
       this.logger.error(`Client warn occurred on shard: ${this.shardId}`, error)
     );
 
-    this.client.connect("wss://gateway.discord.gg/");
+    this.client.connect("wss://gateway.discord.gg/?v=11");
   }
 
   async getGuildCount(): Promise<number> {

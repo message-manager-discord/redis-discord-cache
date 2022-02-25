@@ -83,6 +83,7 @@ class GatewayEventHandler {
       value: 0, // This will be updated to the correct value when receiving GuildCreate events
     });
     this.client.clientId = data.user.id;
+    await this._redis.set({ key: "clientId", value: data.user.id });
     client.emit("readyParsed"); // So events are not processed until ready
   }
   async [GatewayDispatchEvents.GuildCreate](
