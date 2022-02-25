@@ -198,7 +198,7 @@ export default class Guild extends BaseStructure<
   }
 
   get clientId(): Promise<string> {
-    return this.get(`clientId`);
+    return this._redis.get({ key: "clientId" });
   }
 
   get name(): Promise<string> {
