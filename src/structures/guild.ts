@@ -1,25 +1,20 @@
 import {
-  APIGuildMember,
   GatewayGuildCreateDispatchData,
-  GatewayGuildRoleCreateDispatchData,
   GatewayGuildUpdateDispatchData,
-  GatewayChannelCreateDispatchData,
   GatewayThreadCreateDispatchData,
   Snowflake,
   APIRole,
-  MembershipScreeningFieldType,
   APIThreadChannel,
+  ChannelType,
 } from "discord-api-types/v9";
 import ReJSONCommands from "../redis";
 import BaseStructure, { makeStructureKey } from "./base";
 import { Permissions, PERMISSIONS_ALL } from "./consts";
 import {
-  CachedChannelsObject,
   CachedMinimalChannel,
   CachedMinimalGuild,
   CachedMinimalRole,
   CachedRolesObject,
-  ChannelsObject,
   GuildChannel,
   MinimalChannel,
   MinimalRole,
@@ -312,10 +307,21 @@ export default class Guild extends BaseStructure<
     roles: Snowflake[],
     channelId: Snowflake
   ): Promise<bigint> {
-    const channel = await this.getChannel(channelId);
+    let channel = await this.getChannel(channelId);
     if (!channel) {
       throw new Error("Channel not cached!");
     }
+    if (
+      channel.type === ChannelType.GuildNewsThread ||
+      channel.type === ChannelType.GuildPrivateThread ||
+      channel.type === ChannelType.GuildPublicThread
+    ) {
+      channel = await this.getChannel(channel.parent_id!);
+      if (!channel) {
+        throw new Error("Channel not cached!");
+      }
+    }
+
     const guildPermissions = await this.calculateGuildPermissions(
       userId,
       roles
