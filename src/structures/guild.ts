@@ -380,7 +380,7 @@ const parseGuildData = (
     (member) => member.user?.id === clientId
   );
   const botMemberRoles =
-    botMember && botMember.length > 1 ? botMember[0].roles : [];
+    botMember && botMember.length > 0 ? botMember[0].roles : [];
 
   const strippedDownData: CachedMinimalGuild = {
     unavailable: false,
