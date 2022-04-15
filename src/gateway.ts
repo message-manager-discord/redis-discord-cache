@@ -24,6 +24,7 @@ type OnGatewayEventHandler = (options: {
   name: GatewayPackets.Packet["t"];
 }) => any;
 type OnRedisCommandHandler = (options: { name: string }) => any;
+type OnErrorHandler = (error: unknown) => any;
 interface CreateGatewayConnectionOptions {
   redis: {
     port?: number;
@@ -47,6 +48,7 @@ class GatewayClient {
   shardId: number;
   shardCount: number;
   onGatewayEventMetrics: OnGatewayEventHandler | undefined;
+  onErrorInPacketHandler: OnErrorHandler | undefined;
   private _eventsPendingReady: GatewayPackets.Packet[];
   constructor({
     redis,
@@ -95,34 +97,41 @@ class GatewayClient {
   }
 
   async handlePacket(packet: GatewayPackets.Packet) {
-    if (packet.op === GatewayOpcodes.Dispatch) {
-      const { d: data, t: name } = packet;
+    try {
+      if (packet.op === GatewayOpcodes.Dispatch) {
+        const { d: data, t: name } = packet;
 
-      if (name in this.dispatchHandler) {
-        if (name === GatewayDispatchEvents.Ready) {
-          try {
-            (this.dispatchHandler as any)[name](data, this.client);
-          } catch (error) {
-            this.logger.error(`Error handling event ${name}`, error);
-          }
-          return;
-        } else if (!this.isReady) {
-          this.logger.debug(
-            `Waiting for ready to handle websocket event ${name}`
-          );
-          // Events shouldn't be processed until we have a clientId (the client is ready)
-          this._eventsPendingReady.push(packet);
-        } else {
-          this.logger.debug(`Handling websocket event ${name}`);
-          try {
-            (this.dispatchHandler as any)[name](data);
-          } catch (error) {
-            this.logger.error(`Error handling event ${name}`, error);
+        if (name in this.dispatchHandler) {
+          if (name === GatewayDispatchEvents.Ready) {
+            try {
+              (this.dispatchHandler as any)[name](data, this.client);
+            } catch (error) {
+              this.logger.error(`Error handling event ${name}`, error);
+            }
+            return;
+          } else if (!this.isReady) {
+            this.logger.debug(
+              `Waiting for ready to handle websocket event ${name}`
+            );
+            // Events shouldn't be processed until we have a clientId (the client is ready)
+            this._eventsPendingReady.push(packet);
+          } else {
+            this.logger.debug(`Handling websocket event ${name}`);
+            try {
+              (this.dispatchHandler as any)[name](data);
+            } catch (error) {
+              this.logger.error(`Error handling event ${name}`, error);
+            }
           }
         }
+        if (this.onGatewayEventMetrics) {
+          this.onGatewayEventMetrics({ name });
+        }
       }
-      if (this.onGatewayEventMetrics) {
-        this.onGatewayEventMetrics({ name });
+    } catch (error) {
+      this.logger.error(`Error handling packet`, error);
+      if (this.onErrorInPacketHandler) {
+        this.onErrorInPacketHandler(error);
       }
     }
   }
