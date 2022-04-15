@@ -99,24 +99,6 @@ class GatewayClient {
     this.onErrorInPacketHandler = onErrorInPacketHandler;
   }
 
-  async setActive() {
-    // This is to be used by connecting clients to check if the gateway connection is up.
-    // The value is set every 10 seconds, and has an expiery of 10 seconds.
-    // This is to ensure that the client is still connected to the gateway, with a buffer of 20 seconds in the case of a slowdown
-    // This could also be used to acquire a lock on the gateway connection,
-    // if we want to ensure that only one client is connected for each shard at a time
-    await this.redisCommands.nonJSONsetExpiry({
-      key: `shard:${this.shardId || 0}:active`,
-      value: "true",
-      // Expire after 30 seconds
-      expire: 30000,
-    });
-    // Run this function every 10 seconds with settimeout
-    setTimeout(async () => {
-      await this.setActive();
-    }, 10000);
-  }
-
   async handlePacket(packet: GatewayPackets.Packet) {
     try {
       if (packet.op === GatewayOpcodes.Dispatch) {
