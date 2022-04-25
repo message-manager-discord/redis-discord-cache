@@ -370,6 +370,19 @@ export default class Guild extends BaseStructure<
       channelId
     );
   }
+
+  async getUsersHighestRolePosition(roles: Snowflake[]): Promise<number> {
+    const allRoles = await this.getRoles(roles);
+    if (!allRoles) return 0;
+    let highestPosition = 0;
+    // Loop over all roles and if the role is higher than the current highest, set it as the highest
+    Object.entries(allRoles).forEach(([roleId, role]) => {
+      if (role.position > highestPosition) {
+        highestPosition = role.position;
+      }
+    });
+    return highestPosition;
+  }
 }
 
 const parseGuildData = (
