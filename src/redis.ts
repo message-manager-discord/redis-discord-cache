@@ -150,6 +150,9 @@ class ReJSONCommands {
   async nonJSONdecr({ key }: { key: string }) {
     return this._sendCommand("DECR", [key]);
   }
+  async exists({ key }: { key: string }) {
+    return this._sendCommand("EXISTS", [key]);
+  }
 }
 
 interface ScanReturn {
