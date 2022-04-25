@@ -371,6 +371,30 @@ export default class Guild extends BaseStructure<
     );
   }
 
+  async checkIfRoleIsLowerThanUsersRole(
+    roleId: Snowflake,
+    roles: Snowflake[],
+    userId: Snowflake
+  ): Promise<boolean> {
+    const ownerId = await this.ownerId;
+    if (userId === ownerId) {
+      return true; // Owner can do anything, is above all roles
+    }
+    const role = await this.getRole(roleId);
+    const rolePosition = role ? role.position : 0; // If the role doesn't exist, assume it's position is 0
+    const userRoles = await this.getRoles(roles);
+    let highestPosition = 0;
+    // Loop over all roles and if the role is higher than the current highest, set it as the highest
+    if (userRoles) {
+      Object.entries(userRoles).forEach(([roleId, role]) => {
+        if (role.position > highestPosition) {
+          highestPosition = role.position;
+        }
+      });
+    }
+    return highestPosition > rolePosition;
+  }
+
   async getUsersHighestRolePosition(roles: Snowflake[]): Promise<number> {
     const allRoles = await this.getRoles(roles);
     if (!allRoles) return 0;
