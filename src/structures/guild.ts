@@ -180,7 +180,16 @@ export default class Guild extends BaseStructure<
     }
 
     if (!data) {
-      throw new GuildNotFound("Guild not found");
+      if (
+        await this._redis.exists({
+          key: makeStructureKey(this._structureName, this.id),
+        })
+      ) {
+        // Check if the guild is in cache
+        return null;
+      } else {
+        throw new GuildNotFound("Guild not found");
+      }
     } else if (data.unavailable || data.unavailable === null) {
       throw new GuildUnavailable("Guild unavailable");
     }
@@ -209,7 +218,10 @@ export default class Guild extends BaseStructure<
   }
 
   async _getBotMemberRoles(): Promise<Snowflake[]> {
-    return this.get("botMemberRoles") as Promise<Snowflake[]>;
+    const result = (await this.get("botMemberRoles")) as Snowflake[] | null;
+
+    const roles = result ? result : [];
+    return roles;
   }
 
   get botMemberRoles(): Promise<Snowflake[]> {
