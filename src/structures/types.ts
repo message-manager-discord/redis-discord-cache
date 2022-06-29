@@ -1,7 +1,7 @@
 import {
   APIGuildCategoryChannel,
   APIGuildChannel,
-  APIGuildStoreChannel,
+  APIGuildForumChannel,
   APINewsChannel,
   APITextChannel,
   APIThreadChannel,
@@ -14,10 +14,10 @@ import {
 type GuildChannel =
   | APITextChannel
   | APINewsChannel
-  | APIGuildStoreChannel
   | APIVoiceChannel
   | APIGuildCategoryChannel
   | APIThreadChannel
+  | APIGuildForumChannel
   | APINewsChannel;
 
 type CachedMinimalRole = {
@@ -41,7 +41,7 @@ type GuildVoiceChannelTypes =
 
 type NonTextGuildChannelTypes =
   | ChannelType.GuildCategory
-  | ChannelType.GuildStore;
+  | ChannelType.GuildForum;
 
 type NonThreadTextGuildChannelTypes =
   | ChannelType.GuildNews

@@ -10,6 +10,7 @@ import winston from "winston";
 import { createDefaultLogger } from "./logger";
 import { bigIntParse } from "./json";
 import { GatewayPackets } from "detritus-client-socket/lib/types";
+import { ShardClient } from "detritus-client";
 interface DiscordConfig {
   token: string;
   presence?: PresenceOptions;
@@ -40,7 +41,7 @@ interface CreateGatewayConnectionOptions {
 }
 
 class GatewayClient {
-  client: Gateway.Socket;
+  client: ShardClient;
   logger: winston.Logger;
   redisConnection: Redis.Redis;
   redisCommands: ReJSONCommands;
@@ -62,14 +63,18 @@ class GatewayClient {
       logger = createDefaultLogger();
     }
     this.logger = logger;
-    this.client = new Gateway.Socket(discord.token, {
-      presence: {
-        status: "online",
+    this.client = new ShardClient(discord.token, {
+      gateway: {
+        presence: {
+          status: "online",
+        },
+        intents: GatewayIntents.GUILDS,
+        shardId: discord.shardId,
+        shardCount: discord.shardCount,
       },
-      intents: GatewayIntents.GUILDS,
-      shardCount: discord.shardCount,
-      shardId: discord.shardId,
+      cache: false,
     });
+
     this.redisConnection = new Redis(redis.port, redis.host);
     this.logger.info(
       `Connected to redis on host: ${redis.host} port: ${redis.port}`
@@ -164,7 +169,7 @@ class GatewayClient {
       );
     }
 
-    this.client.on("packet", async (packet) => {
+    this.client.on("raw", async (packet) => {
       this.logger.debug(`Received websocket event`, packet);
       this.handlePacket(packet);
     });
@@ -179,23 +184,19 @@ class GatewayClient {
       }
     });
 
-    this.client.on("ready", () =>
+    this.client.on("gatewayReady", () =>
       this.logger.info(`Connected to Discord Gateway on shard: ${this.shardId}`)
     );
-    this.client.on("close", (event) =>
-      this.logger.info(`Client closed on shard: ${this.shardId}`, event)
-    );
-    this.client.on("reconnecting", (event) => {
-      this.logger.info(`Client reconnecting on shard: ${this.shardId}`, event);
-      this.clientId = null;
 
+    this.client.on("killed", (event) => {
+      this.logger.info(`Client closed on shard: ${this.shardId}`, event);
       this.redisCommands.delete({ key: "clientId" });
     });
     this.client.on("warn", (error) =>
       this.logger.error(`Client warn occurred on shard: ${this.shardId}`, error)
     );
 
-    this.client.connect("wss://gateway.discord.gg/?v=11");
+    this.client.run();
   }
 
   async getGuildCount(): Promise<number> {

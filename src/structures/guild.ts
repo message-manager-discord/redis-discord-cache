@@ -6,6 +6,7 @@ import {
   APIRole,
   APIThreadChannel,
   ChannelType,
+  APIGuild,
 } from "discord-api-types/v9";
 import ReJSONCommands from "../redis";
 import BaseStructure, { makeStructureKey } from "./base";
@@ -46,7 +47,7 @@ export default class Guild extends BaseStructure<
     });
   }
   static saveNew(
-    data: GatewayGuildCreateDispatchData,
+    data: GatewayGuildCreateDispatchData | APIGuild,
     { redis, client }: { redis: ReJSONCommands; client: GatewayClient }
   ) {
     return this._baseSave(
@@ -425,7 +426,7 @@ const parseGuildData = (
   data: GatewayGuildCreateDispatchData | GatewayGuildUpdateDispatchData,
   clientId: Snowflake
 ): CachedMinimalGuild => {
-  const botMember = data.members?.filter(
+  const botMember = (data as GatewayGuildCreateDispatchData).members?.filter(
     (member) => member.user?.id === clientId
   );
   const botMemberRoles =
@@ -437,8 +438,12 @@ const parseGuildData = (
     icon: data.icon,
     owner_id: data.owner_id,
     channels: parseChannels(
-      data.channels as GuildChannel[] | undefined,
-      data.threads as APIThreadChannel[] | undefined
+      (data as GatewayGuildCreateDispatchData).channels as
+        | GuildChannel[]
+        | undefined,
+      (data as GatewayGuildCreateDispatchData).threads as
+        | APIThreadChannel[]
+        | undefined
     ),
     roles: parseRolesData(data.roles),
     botMemberRoles,
