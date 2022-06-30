@@ -138,8 +138,20 @@ class ReJSONCommands {
     } while (cursor !== "0");
     return keys;
   }
-  async nonJSONset({ key, value }: { key: string; value: any }) {
-    return this._sendCommand("SET", [key, value]);
+  async nonJSONset({
+    key,
+    value,
+    expiry,
+  }: {
+    key: string;
+    value: any;
+    expiry?: number;
+  }) {
+    let options = [key, value];
+    if (expiry !== undefined) {
+      options = options.concat(["PX", expiry]);
+    }
+    return this._sendCommand("SET", options);
   }
   async nonJSONget({ key }: { key: string }) {
     return this._sendCommand("GET", [key]);
