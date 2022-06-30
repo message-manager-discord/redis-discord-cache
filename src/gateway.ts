@@ -188,10 +188,14 @@ class GatewayClient {
       this.logger.info(`Connected to Discord Gateway on shard: ${this.shardId}`)
     );
 
-    this.client.on("killed", (event) => {
+    const onKillOrClose = (event: any) => {
       this.logger.info(`Client closed on shard: ${this.shardId}`, event);
-      this.redisCommands.delete({ key: "clientId" });
-    });
+    };
+
+    this.client.gateway.on("reconnect", onKillOrClose);
+
+    this.client.on("killed", onKillOrClose);
+    this.client.gateway.on("close", onKillOrClose);
     this.client.on("warn", (error) =>
       this.logger.error(`Client warn occurred on shard: ${this.shardId}`, error)
     );
