@@ -104,7 +104,7 @@ class GatewayEventHandler {
   async [GatewayDispatchEvents.GuildUpdate](
     data: GatewayGuildUpdateDispatchData
   ) {
-    const guild = this.guilds.getGuild(data.id);
+    const guild = this.guilds.getGuildNoCacheChecks(data.id);
     const newParsedData = parseGuildData(
       data,
       this.client.clientId! // Must be set as READY event was received
@@ -147,7 +147,7 @@ class GatewayEventHandler {
         shardId: this._shardId,
         redis: this._redis,
       });
-      await this.guilds.getGuild(data.id).delete("."); // This won't error even if it can't be found
+      await this.guilds.getGuildNoCacheChecks(data.id).delete("."); // This won't error even if it can't be found
     }
 
     await this._redis.nonJSONdecr({ key: `shard:${this._shardId}:guildCount` });
@@ -163,7 +163,7 @@ class GatewayEventHandler {
     ) {
       return; // DMs are not used and therefore would be a waste of memory
     }
-    await this.guilds.getGuild(data.guild_id).saveNewChannel(data);
+    await this.guilds.getGuildNoCacheChecks(data.guild_id).saveNewChannel(data);
   }
   async [GatewayDispatchEvents.ChannelUpdate](
     data: GatewayChannelUpdateDispatchData
@@ -176,7 +176,7 @@ class GatewayEventHandler {
     ) {
       return; // DMs are not used and therefore would be a waste of memory
     }
-    const guild = this.guilds.getGuild(data.guild_id);
+    const guild = this.guilds.getGuildNoCacheChecks(data.guild_id);
     const newParsedData = parseChannel(data);
     try {
       const oldData = await guild.getChannel(data.id);
@@ -205,25 +205,33 @@ class GatewayEventHandler {
     ) {
       return; // DMs are not used and therefore would be a waste of memory
     }
-    await this.guilds.getGuild(data.guild_id).deleteChannel(data.id);
+    await this.guilds
+      .getGuildNoCacheChecks(data.guild_id)
+      .deleteChannel(data.id);
   }
 
   async [GatewayDispatchEvents.GuildRoleCreate](
     data: GatewayGuildRoleCreateDispatchData
   ) {
-    await this.guilds.getGuild(data.guild_id).saveNewRole(data.role);
+    await this.guilds
+      .getGuildNoCacheChecks(data.guild_id)
+      .saveNewRole(data.role);
   }
 
   async [GatewayDispatchEvents.GuildRoleUpdate](
     data: GatewayGuildRoleUpdateDispatchData
   ) {
-    await this.guilds.getGuild(data.guild_id).saveNewRole(data.role);
+    await this.guilds
+      .getGuildNoCacheChecks(data.guild_id)
+      .saveNewRole(data.role);
   }
 
   async [GatewayDispatchEvents.GuildRoleDelete](
     data: GatewayGuildRoleDeleteDispatchData
   ) {
-    await this.guilds.getGuild(data.guild_id).deleteRole(data.role_id);
+    await this.guilds
+      .getGuildNoCacheChecks(data.guild_id)
+      .deleteRole(data.role_id);
   }
 
   async [GatewayDispatchEvents.ThreadCreate](
@@ -232,7 +240,7 @@ class GatewayEventHandler {
     if (!data.guild_id) {
       return; // This should never happen but whatever
     }
-    await this.guilds.getGuild(data.guild_id).saveNewThread(data);
+    await this.guilds.getGuildNoCacheChecks(data.guild_id).saveNewThread(data);
   }
   async [GatewayDispatchEvents.ThreadUpdate](
     data: GatewayThreadUpdateDispatchData
@@ -246,7 +254,7 @@ class GatewayEventHandler {
     }
 
     await this.guilds
-      .getGuild(data.guild_id)
+      .getGuildNoCacheChecks(data.guild_id)
       .saveNewThread(data as APIThreadChannel);
   }
   async [GatewayDispatchEvents.ThreadDelete](
@@ -259,7 +267,7 @@ class GatewayEventHandler {
     ) {
       return; // DMs are not used and therefore would be a waste of memory
     }
-    await this.guilds.getGuild(data.guild_id).deleteThread(
+    await this.guilds.getGuildNoCacheChecks(data.guild_id).deleteThread(
       data.id,
       data.parent_id! // This is included -> https://discord.com/developers/docs/topics/gateway#thread-delete
     );
@@ -268,7 +276,7 @@ class GatewayEventHandler {
     data: GatewayThreadListSyncDispatchData
   ) {
     // Most logic for this function taken from https://github.com/discordjs/discord.js/blob/01f8d1bed564a07d40b184dc7ff686a895ddda31/src/client/actions/ThreadListSync.js
-    const guild = this.guilds.getGuild(data.guild_id);
+    const guild = this.guilds.getGuildNoCacheChecks(data.guild_id);
     try {
       // Clear the threads
       if (data.channel_ids) {
@@ -319,7 +327,7 @@ class GatewayEventHandler {
       return;
     }
     // This will only contain the bot's roles since the members privileged intent should be disabled
-    await this.guilds.getGuild(data.guild_id).setValue({
+    await this.guilds.getGuildNoCacheChecks(data.guild_id).setValue({
       path: "botMemberRoles",
       value: data.roles,
     });
