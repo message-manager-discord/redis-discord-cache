@@ -40,6 +40,8 @@ class GuildManager {
     return new Guild(id, { redis: this._redis });
   }
 
+  getGuildNoCacheChecks = this._getGuild;
+
   async getGuild(id: Snowflake): Promise<Guild> {
     // First get the shard id that the guild is in
     // with shard_id = (guild_id >> 22) % num_shards
