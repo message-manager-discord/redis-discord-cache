@@ -102,6 +102,22 @@ class GatewayClient {
       }
     }
     this.onErrorInPacketHandler = onErrorInPacketHandler;
+
+    // Start active setting
+    this._setActive();
+  }
+
+  private async _setActive() {
+    if (!this.client.killed) {
+      // This should expire after 30 seconds, which is double the time that this function is called
+      await this.redisCommands.nonJSONset({
+        key: `shard:${this.shardId}:active`,
+        value: true,
+        expiry: 30 * 1000,
+      });
+    }
+    // Call this function again in 15 seconds
+    setTimeout(() => this._setActive(), 15 * 1000);
   }
 
   async handlePacket(packet: GatewayPackets.Packet) {
