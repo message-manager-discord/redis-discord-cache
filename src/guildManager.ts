@@ -58,6 +58,31 @@ class GuildManager {
     return this._getGuild(id);
   }
 
+  async getGuildIconsAndNames(guildIds: Snowflake[]): Promise<{
+    [guildId: string]: { icon: string | null; name: string } | undefined;
+  }> {
+    // Get multiple guilds at once - return their icons and names
+    const icons = await this._redis.getMultipleGuildIcons({ guildIds });
+    const names = await this._redis.getMultipleGuildNames({ guildIds });
+    const result: {
+      [guildId: string]: { icon: string | null; name: string } | undefined;
+    } = {};
+    // loop including index
+    for (const [index, guildId] of guildIds.entries()) {
+      const name = names[index];
+      const icon = icons[index];
+      if (name) {
+        result[guildId] = {
+          icon: icon,
+          name: name,
+        };
+      } else {
+        result[guildId] = undefined;
+      }
+    }
+    return result;
+  }
+
   private async _checkShardsActive() {
     const shardCount = await this.getShardCount();
     for (let shardId = 0; shardId < shardCount; shardId++) {
