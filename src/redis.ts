@@ -165,6 +165,22 @@ class ReJSONCommands {
   async exists({ key }: { key: string }) {
     return this._sendCommand("EXISTS", [key]);
   }
+  async getMultipleGuildNames({
+    guildIds,
+  }: {
+    guildIds: Snowflake[];
+  }): Promise<(string | null)[]> {
+    const keys = guildIds.map(makeGuildKey);
+    return this._sendCommand("JSON.MGET", keys, "name");
+  }
+  async getMultipleGuildIcons({
+    guildIds,
+  }: {
+    guildIds: Snowflake[];
+  }): Promise<(string | null)[]> {
+    const keys = guildIds.map(makeGuildKey);
+    return this._sendCommand("JSON.MGET", keys, "icon");
+  }
 }
 
 interface ScanReturn {
