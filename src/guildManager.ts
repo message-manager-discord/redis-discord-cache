@@ -73,8 +73,8 @@ class GuildManager {
       const icon = icons[index];
       if (name) {
         result[guildId] = {
-          icon: icon,
-          name: name,
+          icon: icon ? JSON.parse(icon) : null,
+          name: name ? JSON.parse(name) : null,
         };
       } else {
         result[guildId] = undefined;
