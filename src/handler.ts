@@ -1,4 +1,3 @@
-import type { Socket } from "detritus-client-socket/lib/gateway";
 import type {
   GatewayChannelCreateDispatchData,
   GatewayChannelDeleteDispatchData,
@@ -20,6 +19,7 @@ import { GatewayDispatchEvents } from "discord-api-types/gateway/v9";
 import { APIThreadChannel, ChannelType, Snowflake } from "discord-api-types/v9";
 
 import winston from "winston";
+import { Gateway } from "detritus-client-socket";
 import GatewayClient from "./gateway.js";
 import GuildManager from "./guildManager.js";
 import { bigIntParse, bigIntStringify } from "./json.js";
@@ -32,7 +32,7 @@ import Guild, {
   mergeGuilds,
   parseGuildData,
   removeGuildFromShardArray,
-} from "./structures/guild";
+} from "./structures/guild.js";
 
 // Design inspired from https://github.com/detritusjs/client/blob/b27cbaa5bfb48506b059be178da0e871b83ba95e/src/gateway/handler.ts#L146
 class GatewayEventHandler {
@@ -56,7 +56,7 @@ class GatewayEventHandler {
   }
   async [GatewayDispatchEvents.Ready](
     data: GatewayReadyDispatchData,
-    client: Socket,
+    client: Gateway.Socket,
   ) {
     const newShardGuilds = data.guilds.map((guild) => guild.id);
     const previousShardGuilds = bigIntParse(

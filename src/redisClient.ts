@@ -1,4 +1,4 @@
-import Redis from "ioredis";
+import { Redis } from "ioredis";
 import winston from "winston";
 
 import GuildManager from "./guildManager.js";

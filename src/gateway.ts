@@ -1,19 +1,25 @@
 import { ShardClient } from "detritus-client";
-import { GatewayIntents } from "detritus-client-socket/lib/constants";
-import { PresenceOptions } from "detritus-client-socket/lib/gateway";
-import { GatewayPackets } from "detritus-client-socket/lib/types";
 import { GatewayDispatchEvents } from "discord-api-types/gateway/v9";
 import { GatewayOpcodes, Snowflake } from "discord-api-types/v9";
-import Redis, { Redis as RedisType } from "ioredis";
+import { Redis } from "ioredis";
+import type { Redis as RedisType } from "ioredis";
 import winston from "winston";
+import { Constants, Gateway } from "detritus-client-socket";
 
 import { GatewayEventHandler } from "./handler.js";
 import { bigIntParse } from "./json.js";
 import { createDefaultLogger } from "./logger.js";
 import ReJSONCommands from "./redis.js";
+
+type GatewayPacket = {
+  // TODO - investigate if this custom type can be removed
+  op: GatewayOpcodes;
+  t?: string;
+  d: unknown;
+};
 interface DiscordConfig {
   token: string;
-  presence?: PresenceOptions;
+  presence?: Gateway.PresenceOptions;
   shardCount?: number;
   shardId?: number;
 }
@@ -21,9 +27,7 @@ interface ParsedDiscordConfig extends DiscordConfig {
   shardCount: number;
 }
 
-type OnGatewayEventHandler = (options: {
-  name: GatewayPackets.Packet["t"];
-}) => any;
+type OnGatewayEventHandler = (options: { name: string | null }) => any;
 type OnRedisCommandHandler = (options: { name: string }) => any;
 type OnErrorHandler = (error: unknown) => any;
 interface CreateGatewayConnectionOptions {
@@ -51,7 +55,7 @@ class GatewayClient {
   shardCount: number;
   onGatewayEventMetrics: OnGatewayEventHandler | undefined;
   onErrorInPacketHandler: OnErrorHandler | undefined;
-  private _eventsPendingReady: GatewayPackets.Packet[];
+  private _eventsPendingReady: GatewayPacket[];
   constructor({
     redis,
     discord,
@@ -68,7 +72,7 @@ class GatewayClient {
         presence: {
           status: "online",
         },
-        intents: GatewayIntents.GUILDS,
+        intents: Constants.GatewayIntents.GUILDS,
         shardId: discord.shardId,
         shardCount: discord.shardCount,
       },
@@ -123,12 +127,12 @@ class GatewayClient {
     setTimeout(() => this._setActive(), 15 * 1000);
   }
 
-  async handlePacket(packet: GatewayPackets.Packet) {
+  async handlePacket(packet: GatewayPacket) {
     try {
       if (packet.op === GatewayOpcodes.Dispatch) {
         const { d: data, t: name } = packet;
 
-        if (name in this.dispatchHandler) {
+        if (typeof name === "string" && name in this.dispatchHandler) {
           if (name === GatewayDispatchEvents.Ready) {
             try {
               (this.dispatchHandler as any)[name](data, this.client);
@@ -151,7 +155,7 @@ class GatewayClient {
             }
           }
         }
-        if (this.onGatewayEventMetrics) {
+        if (this.onGatewayEventMetrics && typeof name === "string") {
           this.onGatewayEventMetrics({ name });
         }
       }
