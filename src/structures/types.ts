@@ -1,24 +1,27 @@
 import type {
   APIGuildCategoryChannel,
   APIGuildForumChannel,
+  APIGuildMediaChannel,
+  APIGuildStageVoiceChannel,
+  APIGuildVoiceChannel,
   APINewsChannel,
   APITextChannel,
   APIThreadChannel,
-  APIVoiceChannel,
   ChannelType,
   OverwriteType,
-  Snowflake} from "discord-api-types/v9";
-
-
+  Snowflake,
+} from "discord-api-types/v9";
 
 type GuildChannel =
   | APITextChannel
   | APINewsChannel
-  | APIVoiceChannel
+  | APIGuildVoiceChannel
+  | APIGuildStageVoiceChannel
   | APIGuildCategoryChannel
   | APIThreadChannel
   | APIGuildForumChannel
-  | APINewsChannel;
+  | APINewsChannel
+  | APIGuildMediaChannel;
 
 type CachedMinimalRole = {
   name: string;

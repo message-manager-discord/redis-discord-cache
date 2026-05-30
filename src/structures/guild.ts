@@ -1,18 +1,18 @@
 import type {
-  APIGuild,  APIRole,
+  APIGuild,
+  APIRole,
   APIThreadChannel,
   GatewayGuildCreateDispatchData,
   GatewayGuildUpdateDispatchData,
   GatewayThreadCreateDispatchData,
-  Snowflake} from "discord-api-types/v9";
-import {
-  ChannelType
+  Snowflake,
 } from "discord-api-types/v9";
+import { ChannelType } from "discord-api-types/v9";
 
-import type ReJSONCommands from "../redis";
-import BaseStructure, { makeStructureKey } from "./base";
-import { Permissions, PERMISSIONS_ALL } from "./consts";
-import type {
+import ReJSONCommands from "../redis.js";
+import BaseStructure, { makeStructureKey } from "./base.js";
+import { Permissions, PERMISSIONS_ALL } from "./consts.js";
+import {
   CachedMinimalChannel,
   CachedMinimalGuild,
   CachedMinimalRole,
@@ -21,13 +21,13 @@ import type {
   MinimalChannel,
   MinimalRole,
   RolesObject,
-} from "./types";
+} from "./types.js";
 
 const _structureName = "guild";
-import { GuildNotFound, GuildUnavailable } from "../errors";
-import type GatewayClient from "../gateway";
-import { bigIntStringify } from "../json";
-import { parseChannel, parseChannels, parseThreadChannel } from "./channel";
+import { GuildNotFound, GuildUnavailable } from "../errors.js";
+import GatewayClient from "../gateway.js";
+import { bigIntStringify } from "../json.js";
+import { parseChannel, parseChannels, parseThreadChannel } from "./channel.js";
 
 export default class Guild extends BaseStructure<
   Snowflake,

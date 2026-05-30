@@ -1,9 +1,9 @@
-import type { Snowflake } from "discord-api-types/v9";
+import { Snowflake } from "discord-api-types/v9";
 
-import { ShardInactive } from "./errors";
-import { bigIntParse } from "./json";
-import type ReJSONCommands from "./redis";
-import Guild from "./structures/guild";
+import { ShardInactive } from "./errors.js";
+import { bigIntParse } from "./json.js";
+import ReJSONCommands from "./redis.js";
+import Guild from "./structures/guild.js";
 
 class GuildManager {
   private _redis: ReJSONCommands;

@@ -5,7 +5,8 @@ import type {
   GatewayChannelUpdateDispatchData,
   GatewayGuildCreateDispatchData,
   GatewayGuildDeleteDispatchData,
-  GatewayGuildMemberUpdateDispatchData,  GatewayGuildRoleCreateDispatchData,
+  GatewayGuildMemberUpdateDispatchData,
+  GatewayGuildRoleCreateDispatchData,
   GatewayGuildRoleDeleteDispatchData,
   GatewayGuildRoleUpdateDispatchData,
   GatewayGuildUpdateDispatchData,
@@ -13,20 +14,19 @@ import type {
   GatewayThreadCreateDispatchData,
   GatewayThreadDeleteDispatchData,
   GatewayThreadListSyncDispatchData,
-  GatewayThreadUpdateDispatchData} from "discord-api-types/gateway/v9";
-import {
-  GatewayDispatchEvents
+  GatewayThreadUpdateDispatchData,
 } from "discord-api-types/gateway/v9";
-import type { APIThreadChannel,Snowflake } from "discord-api-types/v9";
-import { ChannelType } from "discord-api-types/v9";
-import type winston from "winston";
+import { GatewayDispatchEvents } from "discord-api-types/gateway/v9";
+import { APIThreadChannel, ChannelType, Snowflake } from "discord-api-types/v9";
 
-import { GuildNotFound, GuildUnavailable } from "./errors";
-import type GatewayClient from "./gateway";
-import GuildManager from "./guildManager";
-import { bigIntParse, bigIntStringify } from "./json";
-import type ReJSONCommands from "./redis";
-import { mergeChannel, parseChannel } from "./structures/channel";
+import winston from "winston";
+import GatewayClient from "./gateway.js";
+import GuildManager from "./guildManager.js";
+import { bigIntParse, bigIntStringify } from "./json.js";
+import { parseChannel, mergeChannel } from "./structures/channel.js";
+
+import { GuildNotFound, GuildUnavailable } from "./errors.js";
+import ReJSONCommands from "./redis.js";
 import Guild, {
   insertGuildIntoShardArray,
   mergeGuilds,
@@ -140,7 +140,10 @@ class GatewayEventHandler {
   ) {
     if (data.unavailable) {
       // Guild is unavailable
-      await Guild.saveNewUnavailable(data, { redis: this._redis });
+      await Guild.saveNewUnavailable(
+        { id: data.id, unavailable: true },
+        { redis: this._redis },
+      );
     } else {
       // Left guild or deleted guild
       await removeGuildFromShardArray({
@@ -157,11 +160,7 @@ class GatewayEventHandler {
   async [GatewayDispatchEvents.ChannelCreate](
     data: GatewayChannelCreateDispatchData,
   ) {
-    if (
-      data.type === ChannelType.DM ||
-      data.type === ChannelType.GroupDM ||
-      !data.guild_id
-    ) {
+    if (!data.guild_id) {
       return; // DMs are not used and therefore would be a waste of memory
     }
     await this.guilds.getGuildNoCacheChecks(data.guild_id).saveNewChannel(data);
@@ -170,11 +169,8 @@ class GatewayEventHandler {
     data: GatewayChannelUpdateDispatchData,
   ) {
     // Overwrite since all data used is included
-    if (
-      data.type === ChannelType.DM ||
-      data.type === ChannelType.GroupDM ||
-      !data.guild_id
-    ) {
+    data.type;
+    if (!data.guild_id) {
       return; // DMs are not used and therefore would be a waste of memory
     }
     const guild = this.guilds.getGuildNoCacheChecks(data.guild_id);
@@ -199,11 +195,7 @@ class GatewayEventHandler {
   async [GatewayDispatchEvents.ChannelDelete](
     data: GatewayChannelDeleteDispatchData,
   ) {
-    if (
-      data.type === ChannelType.DM ||
-      data.type === ChannelType.GroupDM ||
-      !data.guild_id
-    ) {
+    if (!data.guild_id) {
       return; // DMs are not used and therefore would be a waste of memory
     }
     await this.guilds
@@ -246,11 +238,7 @@ class GatewayEventHandler {
   async [GatewayDispatchEvents.ThreadUpdate](
     data: GatewayThreadUpdateDispatchData,
   ) {
-    if (
-      data.type === ChannelType.DM ||
-      data.type === ChannelType.GroupDM ||
-      !data.guild_id
-    ) {
+    if (!data.guild_id) {
       return; // DMs are not used and therefore would be a waste of memory
     }
 

@@ -1,17 +1,16 @@
 import { ShardClient } from "detritus-client";
 import { GatewayIntents } from "detritus-client-socket/lib/constants";
-import type { PresenceOptions } from "detritus-client-socket/lib/gateway";
-import type { GatewayPackets } from "detritus-client-socket/lib/types";
+import { PresenceOptions } from "detritus-client-socket/lib/gateway";
+import { GatewayPackets } from "detritus-client-socket/lib/types";
 import { GatewayDispatchEvents } from "discord-api-types/gateway/v9";
-import type { Snowflake } from "discord-api-types/v9";
-import { GatewayOpcodes } from "discord-api-types/v9";
-import Redis from "ioredis";
-import type winston from "winston";
+import { GatewayOpcodes, Snowflake } from "discord-api-types/v9";
+import Redis, { Redis as RedisType } from "ioredis";
+import winston from "winston";
 
-import { GatewayEventHandler } from "./handler";
-import { bigIntParse } from "./json";
-import { createDefaultLogger } from "./logger";
-import ReJSONCommands from "./redis";
+import { GatewayEventHandler } from "./handler.js";
+import { bigIntParse } from "./json.js";
+import { createDefaultLogger } from "./logger.js";
+import ReJSONCommands from "./redis.js";
 interface DiscordConfig {
   token: string;
   presence?: PresenceOptions;
@@ -44,7 +43,7 @@ interface CreateGatewayConnectionOptions {
 class GatewayClient {
   client: ShardClient;
   logger: winston.Logger;
-  redisConnection: Redis.Redis;
+  redisConnection: RedisType;
   redisCommands: ReJSONCommands;
   dispatchHandler: GatewayEventHandler;
   clientId: Snowflake | null;
@@ -76,7 +75,10 @@ class GatewayClient {
       cache: false,
     });
 
-    this.redisConnection = new Redis(redis.port, redis.host);
+    this.redisConnection = new Redis(
+      redis.port ?? 6379,
+      redis.host ?? "127.0.0.1",
+    );
     this.logger.info(
       `Connected to redis on host: ${redis.host} port: ${redis.port}`,
     );

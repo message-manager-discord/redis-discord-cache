@@ -1,14 +1,15 @@
-import type {
-  Snowflake} from "discord-api-types/v9";
+import {
+  Snowflake,
+} from "discord-api-types/v9";
 
-import { bigIntParse, bigIntStringify } from "../json";
-import type ReJSONCommands from "../redis";
-import type {
+import { bigIntParse, bigIntStringify } from "../json.js";
+import ReJSONCommands from "../redis.js";
+import {
   CachedMinimalChannel,
   CachedMinimalGuild,
   CachedMinimalRole,
   UnavailableGuild,
-} from "./types";
+} from "./types.js";
 
 type CreateDataMinimals =
   | CachedMinimalGuild

@@ -1,9 +1,9 @@
 import Redis from "ioredis";
-import type winston from "winston";
+import winston from "winston";
 
-import GuildManager from "./guildManager";
-import { createDefaultLogger } from "./logger";
-import ReJSONCommands from "./redis";
+import GuildManager from "./guildManager.js";
+import { createDefaultLogger } from "./logger.js";
+import ReJSONCommands from "./redis.js";
 
 interface CreateRedisClientOptions {
   port?: number;
@@ -19,7 +19,7 @@ const createRedisClient = ({
   if (!logger) {
     logger = createDefaultLogger();
   }
-  const redisConnection = new Redis(port, host);
+  const redisConnection = new Redis(port ?? 6379, host ?? "127.0.0.1");
   logger.info(`Connected to redis on host: ${host} port: ${port}`);
   const redisCommands = new ReJSONCommands(redisConnection, logger);
   return new GuildManager(redisCommands);

@@ -22,7 +22,7 @@ class ReJSONCommands {
   private async _sendCommand(command: string, ...args: any[]): Promise<any> {
     this.logger.debug(`Sending redis command: ${command} with args: ${args}`);
 
-    const data = await this.redis.send_command(command, ...args);
+    const data = await this.redis.call(command, ...args); // TODO I DON"T KNOW IF THIS WILL WORK
     this.logger.debug(
       `Received data: ${data} from redis command: ${command} with args ${args}`,
     );

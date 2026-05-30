@@ -5,7 +5,7 @@ import type {
   CachedMinimalChannel,
   ChannelOverwritesObject,
   GuildChannel,
-} from "./types";
+} from "./types.js";
 
 const parseChannel = (channel: GuildChannel): CachedMinimalChannel => ({
   name: channel.name,
@@ -96,4 +96,4 @@ const mergeChannel = (
   };
 };
 
-export { mergeChannel,parseChannel, parseChannels, parseThreadChannel };
+export { mergeChannel, parseChannel, parseChannels, parseThreadChannel };

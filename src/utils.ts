@@ -1,8 +1,8 @@
 import Redis from "ioredis";
-import type winston from "winston";
+import winston from "winston";
 
-import { createDefaultLogger } from "./logger";
-import ReJSONCommands from "./redis";
+import { createDefaultLogger } from "./logger.js";
+import ReJSONCommands from "./redis.js";
 
 const clearCache = async ({
   redis,
@@ -17,7 +17,10 @@ const clearCache = async ({
   if (!logger) {
     logger = createDefaultLogger();
   }
-  const redisConnection = new Redis(redis.port, redis.host);
+  const redisConnection = new Redis(
+    redis.port ?? 6379,
+    redis.host ?? "127.0.0.1",
+  );
   logger.info(`Connected to redis on host: ${redis.host} port: ${redis.port}`);
 
   const redisCommands = new ReJSONCommands(redisConnection, logger);
