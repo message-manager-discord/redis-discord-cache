@@ -1,6 +1,5 @@
-import {
+import type {
   APIGuildCategoryChannel,
-  APIGuildChannel,
   APIGuildForumChannel,
   APINewsChannel,
   APITextChannel,
@@ -8,8 +7,9 @@ import {
   APIVoiceChannel,
   ChannelType,
   OverwriteType,
-  Snowflake,
-} from "discord-api-types/v9";
+  Snowflake} from "discord-api-types/v9";
+
+
 
 type GuildChannel =
   | APITextChannel
@@ -110,25 +110,25 @@ interface UnavailableGuild {
   unavailable: boolean;
 }
 export {
-  CachedMinimalGuild,
-  RolesObject,
-  CachedRolesObject,
-  ChannelsObject,
   CachedChannelsObject,
-  MinimalChannel,
   CachedMinimalChannel,
-  NotThreadChannelTypes,
-  GuildTextChannelTypes,
-  GuildChannelTypes,
-  GuildThreadTypes,
-  NonThreadTextGuildChannelTypes,
-  NonTextGuildChannelTypes,
-  GuildVoiceChannelTypes,
-  DMChannelTypes,
-  MinimalRole,
+  CachedMinimalGuild,
   CachedMinimalRole,
+  CachedRolesObject,
   ChannelOverwrite,
   ChannelOverwritesObject,
-  UnavailableGuild,
+  ChannelsObject,
+  DMChannelTypes,
   GuildChannel,
+  GuildChannelTypes,
+  GuildTextChannelTypes,
+  GuildThreadTypes,
+  GuildVoiceChannelTypes,
+  MinimalChannel,
+  MinimalRole,
+  NonTextGuildChannelTypes,
+  NonThreadTextGuildChannelTypes,
+  NotThreadChannelTypes,
+  RolesObject,
+  UnavailableGuild,
 };

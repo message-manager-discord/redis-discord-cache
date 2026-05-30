@@ -1,7 +1,8 @@
-import { Snowflake } from "discord-api-types/v9";
+import type { Snowflake } from "discord-api-types/v9";
+
 import { ShardInactive } from "./errors";
 import { bigIntParse } from "./json";
-import ReJSONCommands from "./redis";
+import type ReJSONCommands from "./redis";
 import Guild from "./structures/guild";
 
 class GuildManager {
@@ -51,7 +52,7 @@ class GuildManager {
     const shardIsActive = !this._shardsInactiveCache.includes(shardIdString);
     if (!shardIsActive) {
       throw new ShardInactive(
-        `The guild ${id} cannot be accessed because the shard ${shardId} is inactive`
+        `The guild ${id} cannot be accessed because the shard ${shardId} is inactive`,
       );
     }
 
@@ -88,14 +89,14 @@ class GuildManager {
     for (let shardId = 0; shardId < shardCount; shardId++) {
       const shardIdString = shardId.toString();
       const shardIsActive = JSON.parse(
-        await this._redis.nonJSONget({ key: `shard:${shardId}:active` })
+        await this._redis.nonJSONget({ key: `shard:${shardId}:active` }),
       ) as boolean | null;
       if (this._shardsInactiveCache.includes(shardIdString)) {
         if (shardIsActive) {
           // remove from array
           this._shardsInactiveCache.splice(
             this._shardsInactiveCache.indexOf(shardIdString),
-            1
+            1,
           );
         }
       } else {
@@ -119,7 +120,7 @@ class GuildManager {
       const shardGuildCount = JSON.parse(
         await this._redis.nonJSONget({
           key: `shard:${shardId || 0}:guildCount`,
-        })
+        }),
       );
       guildCount += shardGuildCount;
     }

@@ -1,6 +1,6 @@
-import { Snowflake } from "discord-api-types/v9";
-import { Redis } from "ioredis";
-import winston from "winston";
+import type { Snowflake } from "discord-api-types/v9";
+import type { Redis } from "ioredis";
+import type winston from "winston";
 
 const makeGuildKey = (guildId: Snowflake) => `guild:${guildId}`;
 
@@ -12,7 +12,7 @@ class ReJSONCommands {
   constructor(
     redis: Redis,
     logger: winston.Logger,
-    onCommand?: (({ name }: { name: string }) => any) | undefined
+    onCommand?: (({ name }: { name: string }) => any) | undefined,
   ) {
     this.redis = redis;
 
@@ -24,7 +24,7 @@ class ReJSONCommands {
 
     const data = await this.redis.send_command(command, ...args);
     this.logger.debug(
-      `Received data: ${data} from redis command: ${command} with args ${args}`
+      `Received data: ${data} from redis command: ${command} with args ${args}`,
     );
     try {
       if (this.onCommand) {

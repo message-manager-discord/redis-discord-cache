@@ -1,10 +1,9 @@
-import {
-  Snowflake,
-  GatewayGuildCreateDispatchData,
-} from "discord-api-types/v9";
+import type {
+  Snowflake} from "discord-api-types/v9";
+
 import { bigIntParse, bigIntStringify } from "../json";
-import ReJSONCommands from "../redis";
-import {
+import type ReJSONCommands from "../redis";
+import type {
   CachedMinimalChannel,
   CachedMinimalGuild,
   CachedMinimalRole,
@@ -19,7 +18,7 @@ type CreateDataMinimals =
 
 export const makeStructureKey = (
   structureName: string,
-  structureId: Snowflake
+  structureId: Snowflake,
 ) => `${structureName}:${structureId}`;
 
 interface CachedCommand {
@@ -47,7 +46,7 @@ export default abstract class BaseStructure<Key, Value> {
 
   private async _checkTimestampCached(
     name: string,
-    data: CachedCommand
+    data: CachedCommand,
   ): Promise<void> {
     const now = Date.now();
     if (now - data.time > 1000 * 15) {
@@ -94,7 +93,7 @@ export default abstract class BaseStructure<Key, Value> {
   static _baseSave(
     data: CreateDataMinimals,
     id: Snowflake,
-    { redis, structureName }: { redis: ReJSONCommands; structureName: string }
+    { redis, structureName }: { redis: ReJSONCommands; structureName: string },
   ): Promise<void> {
     return redis.set({
       key: makeStructureKey(structureName, id),

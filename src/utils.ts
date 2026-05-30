@@ -1,6 +1,7 @@
-import winston from "winston";
-import { createDefaultLogger } from "./logger";
 import Redis from "ioredis";
+import type winston from "winston";
+
+import { createDefaultLogger } from "./logger";
 import ReJSONCommands from "./redis";
 
 const clearCache = async ({

@@ -1,8 +1,9 @@
 import Redis from "ioredis";
-import ReJSONCommands from "./redis";
+import type winston from "winston";
+
 import GuildManager from "./guildManager";
-import winston from "winston";
 import { createDefaultLogger } from "./logger";
+import ReJSONCommands from "./redis";
 
 interface CreateRedisClientOptions {
   port?: number;

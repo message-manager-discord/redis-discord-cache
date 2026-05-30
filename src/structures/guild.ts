@@ -1,17 +1,18 @@
-import {
+import type {
+  APIGuild,  APIRole,
+  APIThreadChannel,
   GatewayGuildCreateDispatchData,
   GatewayGuildUpdateDispatchData,
   GatewayThreadCreateDispatchData,
-  Snowflake,
-  APIRole,
-  APIThreadChannel,
-  ChannelType,
-  APIGuild,
+  Snowflake} from "discord-api-types/v9";
+import {
+  ChannelType
 } from "discord-api-types/v9";
-import ReJSONCommands from "../redis";
+
+import type ReJSONCommands from "../redis";
 import BaseStructure, { makeStructureKey } from "./base";
 import { Permissions, PERMISSIONS_ALL } from "./consts";
-import {
+import type {
   CachedMinimalChannel,
   CachedMinimalGuild,
   CachedMinimalRole,
@@ -24,9 +25,9 @@ import {
 
 const _structureName = "guild";
 import { GuildNotFound, GuildUnavailable } from "../errors";
-import { parseChannel, parseChannels, parseThreadChannel } from "./channel";
+import type GatewayClient from "../gateway";
 import { bigIntStringify } from "../json";
-import GatewayClient from "../gateway";
+import { parseChannel, parseChannels, parseThreadChannel } from "./channel";
 
 export default class Guild extends BaseStructure<
   Snowflake,
@@ -38,7 +39,7 @@ export default class Guild extends BaseStructure<
   }
   static saveNewUnavailable(
     data: { id: Snowflake; unavailable: boolean },
-    { redis }: { redis: ReJSONCommands }
+    { redis }: { redis: ReJSONCommands },
   ) {
     const strippedDownData = { unavailable: data.unavailable };
     return this._baseSave(strippedDownData, data.id, {
@@ -48,18 +49,18 @@ export default class Guild extends BaseStructure<
   }
   static saveNew(
     data: GatewayGuildCreateDispatchData | APIGuild,
-    { redis, client }: { redis: ReJSONCommands; client: GatewayClient }
+    { redis, client }: { redis: ReJSONCommands; client: GatewayClient },
   ) {
     return this._baseSave(
       parseGuildData(
         data,
-        client.clientId! // Must be set as READY event was received
+        client.clientId!, // Must be set as READY event was received
       ),
       data.id,
       {
         redis,
         structureName: _structureName,
-      }
+      },
     );
   }
 
@@ -100,7 +101,7 @@ export default class Guild extends BaseStructure<
 
   async overwriteNewChannel(
     id: Snowflake,
-    data: CachedMinimalChannel
+    data: CachedMinimalChannel,
   ): Promise<any> {
     try {
       return await this.setValue({
@@ -242,13 +243,13 @@ export default class Guild extends BaseStructure<
   }
   async getRoles(ids: Snowflake[]): Promise<RolesObject | null> {
     const cached = (await this.get(
-      ids.map((roleId) => `roles['${roleId}']`)
+      ids.map((roleId) => `roles['${roleId}']`),
     )) as CachedRolesObject | null;
 
     if (cached === null) {
       return null;
     }
-    let parsed: RolesObject = {};
+    const parsed: RolesObject = {};
 
     Object.entries(cached).forEach((roleEntry) => {
       const roleId = roleEntry[0].replace(/roles\['|'\]/g, "");
@@ -263,7 +264,7 @@ export default class Guild extends BaseStructure<
     let channel: CachedMinimalChannel | null;
     try {
       channel = (await this.get(
-        `channels["${id}"]`
+        `channels["${id}"]`,
       )) as CachedMinimalChannel | null;
     } catch (error) {
       if (error instanceof GuildNotFound) {
@@ -283,7 +284,7 @@ export default class Guild extends BaseStructure<
   // https://discord.com/developers/docs/topics/permissions#permission-overwrites
   async calculateGuildPermissions(
     userId: Snowflake,
-    roles: Snowflake[]
+    roles: Snowflake[],
   ): Promise<bigint> {
     if (userId === (await this.ownerId)) {
       return PERMISSIONS_ALL;
@@ -318,7 +319,7 @@ export default class Guild extends BaseStructure<
   async calculateChannelPermissions(
     userId: Snowflake,
     roles: Snowflake[],
-    channelId: Snowflake
+    channelId: Snowflake,
   ): Promise<bigint> {
     let channel = await this.getChannel(channelId);
     if (!channel) {
@@ -337,7 +338,7 @@ export default class Guild extends BaseStructure<
 
     const guildPermissions = await this.calculateGuildPermissions(
       userId,
-      roles
+      roles,
     );
     if (
       (guildPermissions & Permissions.ADMINISTRATOR) ===
@@ -380,14 +381,14 @@ export default class Guild extends BaseStructure<
     return await this.calculateChannelPermissions(
       botId,
       botMemberRoles,
-      channelId
+      channelId,
     );
   }
 
   async checkIfRoleIsLowerThanUsersRole(
     roleId: Snowflake,
     roles: Snowflake[],
-    userId: Snowflake
+    userId: Snowflake,
   ): Promise<boolean> {
     const ownerId = await this.ownerId;
     if (userId === ownerId) {
@@ -424,10 +425,10 @@ export default class Guild extends BaseStructure<
 
 const parseGuildData = (
   data: GatewayGuildCreateDispatchData | GatewayGuildUpdateDispatchData,
-  clientId: Snowflake
+  clientId: Snowflake,
 ): CachedMinimalGuild => {
   const botMember = (data as GatewayGuildCreateDispatchData).members?.filter(
-    (member) => member.user?.id === clientId
+    (member) => member.user?.id === clientId,
   );
   const botMemberRoles =
     botMember && botMember.length > 0 ? botMember[0].roles : [];
@@ -443,7 +444,7 @@ const parseGuildData = (
         | undefined,
       (data as GatewayGuildCreateDispatchData).threads as
         | APIThreadChannel[]
-        | undefined
+        | undefined,
     ),
     roles: parseRolesData(data.roles),
     botMemberRoles,
@@ -457,7 +458,7 @@ const parseRolesData = (roles: APIRole[]): CachedRolesObject => {
       ...obj,
       [role.id]: parseRoleData(role),
     }),
-    {}
+    {},
   );
 };
 
@@ -472,7 +473,7 @@ const parseRoleData = (role: APIRole): CachedMinimalRole => ({
 
 const mergeGuilds = (
   oldData: CachedMinimalGuild,
-  newData: CachedMinimalGuild
+  newData: CachedMinimalGuild,
 ): CachedMinimalGuild => {
   return {
     channels: oldData.channels,
@@ -532,8 +533,8 @@ const removeGuildFromShardArray = async ({
 };
 
 export {
+  insertGuildIntoShardArray,
   mergeGuilds,
   parseGuildData,
   removeGuildFromShardArray,
-  insertGuildIntoShardArray,
 };

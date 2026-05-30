@@ -44,5 +44,5 @@ export const Permissions = Object.freeze({
 
 export const PERMISSIONS_ALL = Object.values(Permissions).reduce(
   (permissions: bigint, permission: bigint) => permissions | permission,
-  Permissions.NONE
+  Permissions.NONE,
 );

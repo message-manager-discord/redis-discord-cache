@@ -1,37 +1,38 @@
-import {
-  GatewayDispatchEvents,
+import type { Socket } from "detritus-client-socket/lib/gateway";
+import type {
+  GatewayChannelCreateDispatchData,
+  GatewayChannelDeleteDispatchData,
+  GatewayChannelUpdateDispatchData,
   GatewayGuildCreateDispatchData,
   GatewayGuildDeleteDispatchData,
-  GatewayReadyDispatchData,
-  GatewayGuildUpdateDispatchData,
-  GatewayChannelCreateDispatchData,
-  GatewayChannelUpdateDispatchData,
-  GatewayChannelDeleteDispatchData,
-  GatewayGuildRoleUpdateDispatchData,
-  GatewayGuildRoleCreateDispatchData,
+  GatewayGuildMemberUpdateDispatchData,  GatewayGuildRoleCreateDispatchData,
   GatewayGuildRoleDeleteDispatchData,
+  GatewayGuildRoleUpdateDispatchData,
+  GatewayGuildUpdateDispatchData,
+  GatewayReadyDispatchData,
   GatewayThreadCreateDispatchData,
-  GatewayThreadUpdateDispatchData,
   GatewayThreadDeleteDispatchData,
   GatewayThreadListSyncDispatchData,
-  GatewayGuildMemberUpdateDispatchData,
+  GatewayThreadUpdateDispatchData} from "discord-api-types/gateway/v9";
+import {
+  GatewayDispatchEvents
 } from "discord-api-types/gateway/v9";
-import { Snowflake, ChannelType, APIThreadChannel } from "discord-api-types/v9";
-import { GuildNotFound, GuildUnavailable } from "./errors";
-import ReJSONCommands from "./redis";
+import type { APIThreadChannel,Snowflake } from "discord-api-types/v9";
+import { ChannelType } from "discord-api-types/v9";
+import type winston from "winston";
 
+import { GuildNotFound, GuildUnavailable } from "./errors";
+import type GatewayClient from "./gateway";
+import GuildManager from "./guildManager";
+import { bigIntParse, bigIntStringify } from "./json";
+import type ReJSONCommands from "./redis";
+import { mergeChannel, parseChannel } from "./structures/channel";
 import Guild, {
   insertGuildIntoShardArray,
   mergeGuilds,
   parseGuildData,
   removeGuildFromShardArray,
 } from "./structures/guild";
-import { mergeChannel, parseChannel } from "./structures/channel";
-import GuildManager from "./guildManager";
-import winston from "winston";
-import { bigIntParse, bigIntStringify } from "./json";
-import { Socket } from "detritus-client-socket/lib/gateway";
-import GatewayClient from "./gateway";
 
 // Design inspired from https://github.com/detritusjs/client/blob/b27cbaa5bfb48506b059be178da0e871b83ba95e/src/gateway/handler.ts#L146
 class GatewayEventHandler {
@@ -45,7 +46,7 @@ class GatewayEventHandler {
     client: GatewayClient,
     redis: ReJSONCommands,
     logger: winston.Logger,
-    shardId: number
+    shardId: number,
   ) {
     this._redis = redis;
     this._logger = logger;
@@ -55,11 +56,11 @@ class GatewayEventHandler {
   }
   async [GatewayDispatchEvents.Ready](
     data: GatewayReadyDispatchData,
-    client: Socket
+    client: Socket,
   ) {
     const newShardGuilds = data.guilds.map((guild) => guild.id);
     const previousShardGuilds = bigIntParse(
-      await this._redis.get({ key: `shard:${this._shardId}` })
+      await this._redis.get({ key: `shard:${this._shardId}` }),
     ) as Snowflake[] | null;
     // This is incase any guilds were deleted while the process was offline
     // and thus they should be deleted from the cache
@@ -87,7 +88,7 @@ class GatewayEventHandler {
     client.emit("readyParsed"); // So events are not processed until ready
   }
   async [GatewayDispatchEvents.GuildCreate](
-    data: GatewayGuildCreateDispatchData
+    data: GatewayGuildCreateDispatchData,
   ) {
     await Guild.saveNew(data, { redis: this._redis, client: this.client });
     // This command must be first. This is because a GUILD_MEMBER_UPDATE is sent immediately after
@@ -102,12 +103,12 @@ class GatewayEventHandler {
     await this._redis.nonJSONincr({ key: `shard:${this._shardId}:guildCount` });
   }
   async [GatewayDispatchEvents.GuildUpdate](
-    data: GatewayGuildUpdateDispatchData
+    data: GatewayGuildUpdateDispatchData,
   ) {
     const guild = this.guilds.getGuildNoCacheChecks(data.id);
     const newParsedData = parseGuildData(
       data,
-      this.client.clientId! // Must be set as READY event was received
+      this.client.clientId!, // Must be set as READY event was received
     );
     try {
       const oldData = await guild.toStatic();
@@ -135,7 +136,7 @@ class GatewayEventHandler {
     }
   }
   async [GatewayDispatchEvents.GuildDelete](
-    data: GatewayGuildDeleteDispatchData
+    data: GatewayGuildDeleteDispatchData,
   ) {
     if (data.unavailable) {
       // Guild is unavailable
@@ -154,7 +155,7 @@ class GatewayEventHandler {
   }
 
   async [GatewayDispatchEvents.ChannelCreate](
-    data: GatewayChannelCreateDispatchData
+    data: GatewayChannelCreateDispatchData,
   ) {
     if (
       data.type === ChannelType.DM ||
@@ -166,7 +167,7 @@ class GatewayEventHandler {
     await this.guilds.getGuildNoCacheChecks(data.guild_id).saveNewChannel(data);
   }
   async [GatewayDispatchEvents.ChannelUpdate](
-    data: GatewayChannelUpdateDispatchData
+    data: GatewayChannelUpdateDispatchData,
   ) {
     // Overwrite since all data used is included
     if (
@@ -196,7 +197,7 @@ class GatewayEventHandler {
   }
 
   async [GatewayDispatchEvents.ChannelDelete](
-    data: GatewayChannelDeleteDispatchData
+    data: GatewayChannelDeleteDispatchData,
   ) {
     if (
       data.type === ChannelType.DM ||
@@ -211,7 +212,7 @@ class GatewayEventHandler {
   }
 
   async [GatewayDispatchEvents.GuildRoleCreate](
-    data: GatewayGuildRoleCreateDispatchData
+    data: GatewayGuildRoleCreateDispatchData,
   ) {
     await this.guilds
       .getGuildNoCacheChecks(data.guild_id)
@@ -219,7 +220,7 @@ class GatewayEventHandler {
   }
 
   async [GatewayDispatchEvents.GuildRoleUpdate](
-    data: GatewayGuildRoleUpdateDispatchData
+    data: GatewayGuildRoleUpdateDispatchData,
   ) {
     await this.guilds
       .getGuildNoCacheChecks(data.guild_id)
@@ -227,7 +228,7 @@ class GatewayEventHandler {
   }
 
   async [GatewayDispatchEvents.GuildRoleDelete](
-    data: GatewayGuildRoleDeleteDispatchData
+    data: GatewayGuildRoleDeleteDispatchData,
   ) {
     await this.guilds
       .getGuildNoCacheChecks(data.guild_id)
@@ -235,7 +236,7 @@ class GatewayEventHandler {
   }
 
   async [GatewayDispatchEvents.ThreadCreate](
-    data: GatewayThreadCreateDispatchData
+    data: GatewayThreadCreateDispatchData,
   ) {
     if (!data.guild_id) {
       return; // This should never happen but whatever
@@ -243,7 +244,7 @@ class GatewayEventHandler {
     await this.guilds.getGuildNoCacheChecks(data.guild_id).saveNewThread(data);
   }
   async [GatewayDispatchEvents.ThreadUpdate](
-    data: GatewayThreadUpdateDispatchData
+    data: GatewayThreadUpdateDispatchData,
   ) {
     if (
       data.type === ChannelType.DM ||
@@ -258,7 +259,7 @@ class GatewayEventHandler {
       .saveNewThread(data as APIThreadChannel);
   }
   async [GatewayDispatchEvents.ThreadDelete](
-    data: GatewayThreadDeleteDispatchData
+    data: GatewayThreadDeleteDispatchData,
   ) {
     if (
       data.type === ChannelType.DM ||
@@ -269,11 +270,11 @@ class GatewayEventHandler {
     }
     await this.guilds.getGuildNoCacheChecks(data.guild_id).deleteThread(
       data.id,
-      data.parent_id! // This is included -> https://discord.com/developers/docs/topics/gateway#thread-delete
+      data.parent_id!, // This is included -> https://discord.com/developers/docs/topics/gateway#thread-delete
     );
   }
   async [GatewayDispatchEvents.ThreadListSync](
-    data: GatewayThreadListSyncDispatchData
+    data: GatewayThreadListSyncDispatchData,
   ) {
     // Most logic for this function taken from https://github.com/discordjs/discord.js/blob/01f8d1bed564a07d40b184dc7ff686a895ddda31/src/client/actions/ThreadListSync.js
     const guild = this.guilds.getGuildNoCacheChecks(data.guild_id);
@@ -320,7 +321,7 @@ class GatewayEventHandler {
     }
   }
   async [GatewayDispatchEvents.GuildMemberUpdate](
-    data: GatewayGuildMemberUpdateDispatchData
+    data: GatewayGuildMemberUpdateDispatchData,
   ) {
     // If clientId on _redis is not the same as the id on the data, then the event is not for the bot process and therefore should be ignored
     if (this.client.clientId !== data.user.id) {
