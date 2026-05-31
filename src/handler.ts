@@ -1,3 +1,4 @@
+import { Gateway } from "detritus-client-socket";
 import type {
   GatewayChannelCreateDispatchData,
   GatewayChannelDeleteDispatchData,
@@ -16,17 +17,16 @@ import type {
   GatewayThreadUpdateDispatchData,
 } from "discord-api-types/gateway/v9";
 import { GatewayDispatchEvents } from "discord-api-types/gateway/v9";
-import { APIThreadChannel, ChannelType, Snowflake } from "discord-api-types/v9";
-
+import type { APIThreadChannel, Snowflake } from "discord-api-types/v9";
+import { ChannelType } from "discord-api-types/v9";
 import winston from "winston";
-import { Gateway } from "detritus-client-socket";
-import GatewayClient from "./gateway.js";
-import GuildManager from "./guildManager.js";
-import { bigIntParse, bigIntStringify } from "./json.js";
-import { parseChannel, mergeChannel } from "./structures/channel.js";
 
 import { GuildNotFound, GuildUnavailable } from "./errors.js";
+import type GatewayClient from "./gateway.js";
+import GuildManager from "./guildManager.js";
+import { bigIntParse, bigIntStringify } from "./json.js";
 import ReJSONCommands from "./redis.js";
+import { mergeChannel, parseChannel } from "./structures/channel.js";
 import Guild, {
   insertGuildIntoShardArray,
   mergeGuilds,
@@ -90,7 +90,10 @@ class GatewayEventHandler {
   async [GatewayDispatchEvents.GuildCreate](
     data: GatewayGuildCreateDispatchData,
   ) {
-    await Guild.saveNew(data, { redis: this._redis, client: this.client });
+    await Guild.saveNew(data, {
+      redis: this._redis,
+      clientId: this.client.clientId,
+    });
     // This command must be first. This is because a GUILD_MEMBER_UPDATE is sent immediately after
     // the GUILD_CREATE event. Due to the async nature of handling if this command is not sent first,
     // the member roles will be attempted to be updated on the guild before the guild is created.
@@ -116,7 +119,10 @@ class GatewayEventHandler {
       await guild.overwrite(newData);
     } catch (error) {
       if (error instanceof GuildNotFound) {
-        await Guild.saveNew(data, { redis: this._redis, client: this.client });
+        await Guild.saveNew(data, {
+          redis: this._redis,
+          clientId: this.client.clientId,
+        });
         await this._redis.nonJSONincr({
           key: `shard:${this._shardId}:guildCount`,
         });

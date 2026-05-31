@@ -12,7 +12,7 @@ import { ChannelType } from "discord-api-types/v9";
 import ReJSONCommands from "../redis.js";
 import BaseStructure, { makeStructureKey } from "./base.js";
 import { Permissions, PERMISSIONS_ALL } from "./consts.js";
-import {
+import type {
   CachedMinimalChannel,
   CachedMinimalGuild,
   CachedMinimalRole,
@@ -25,7 +25,6 @@ import {
 
 const _structureName = "guild";
 import { GuildNotFound, GuildUnavailable } from "../errors.js";
-import GatewayClient from "../gateway.js";
 import { bigIntStringify } from "../json.js";
 import { parseChannel, parseChannels, parseThreadChannel } from "./channel.js";
 
@@ -49,12 +48,15 @@ export default class Guild extends BaseStructure<
   }
   static saveNew(
     data: GatewayGuildCreateDispatchData | APIGuild,
-    { redis, client }: { redis: ReJSONCommands; client: GatewayClient },
+    {
+      redis,
+      clientId,
+    }: { redis: ReJSONCommands; clientId: Snowflake | null | undefined },
   ) {
     return this._baseSave(
       parseGuildData(
         data,
-        client.clientId!, // Must be set as READY event was received
+        clientId, // Must be set as READY event was received
       ),
       data.id,
       {
@@ -425,11 +427,13 @@ export default class Guild extends BaseStructure<
 
 const parseGuildData = (
   data: GatewayGuildCreateDispatchData | GatewayGuildUpdateDispatchData,
-  clientId: Snowflake,
+  clientId: string | null | undefined,
 ): CachedMinimalGuild => {
-  const botMember = (data as GatewayGuildCreateDispatchData).members?.filter(
-    (member) => member.user?.id === clientId,
-  );
+  const botMember = clientId
+    ? (data as GatewayGuildCreateDispatchData).members?.filter(
+        (member) => member.user?.id === clientId,
+      )
+    : undefined;
   const botMemberRoles =
     botMember && botMember.length > 0 ? botMember[0].roles : [];
 

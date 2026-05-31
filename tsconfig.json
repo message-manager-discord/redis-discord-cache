@@ -6,17 +6,17 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
 
+    "verbatimModuleSyntax": true,
+
     "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
 
     "rootDir": "src",
     "outDir": "dist",
+
     "declaration": true,
     "sourceMap": true,
-    "resolveJsonModule": true
-  },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist", "test"]
+    "resolveJsonModule": true,
+
+    "types": ["node"]
+  }
 }

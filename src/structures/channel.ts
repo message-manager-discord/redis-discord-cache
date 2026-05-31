@@ -23,7 +23,7 @@ const parseChannel = (channel: GuildChannel): CachedMinimalChannel => ({
     {},
   ),
   type: channel.type,
-  position: channel.position,
+  position: "position" in channel ? channel.position : undefined,
   threads: [],
 });
 

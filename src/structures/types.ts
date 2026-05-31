@@ -112,7 +112,7 @@ interface CachedMinimalGuild {
 interface UnavailableGuild {
   unavailable: boolean;
 }
-export {
+export type {
   CachedChannelsObject,
   CachedMinimalChannel,
   CachedMinimalGuild,

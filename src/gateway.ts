@@ -1,10 +1,11 @@
 import { ShardClient } from "detritus-client";
-import { GatewayDispatchEvents } from "discord-api-types/gateway/v9";
-import { GatewayOpcodes, Snowflake } from "discord-api-types/v9";
-import { Redis } from "ioredis";
-import type { Redis as RedisType } from "ioredis";
-import winston from "winston";
 import { Constants, Gateway } from "detritus-client-socket";
+import { GatewayDispatchEvents } from "discord-api-types/gateway/v9";
+import type { Snowflake } from "discord-api-types/v9";
+import { GatewayOpcodes } from "discord-api-types/v9";
+import type { Redis as RedisType } from "ioredis";
+import { Redis } from "ioredis";
+import winston from "winston";
 
 import { GatewayEventHandler } from "./handler.js";
 import { bigIntParse } from "./json.js";

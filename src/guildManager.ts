@@ -1,4 +1,4 @@
-import { Snowflake } from "discord-api-types/v9";
+import type { Snowflake } from "discord-api-types/v9";
 
 import { ShardInactive } from "./errors.js";
 import { bigIntParse } from "./json.js";

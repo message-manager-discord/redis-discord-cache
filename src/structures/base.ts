@@ -1,10 +1,8 @@
-import {
-  Snowflake,
-} from "discord-api-types/v9";
+import type { Snowflake } from "discord-api-types/v9";
 
 import { bigIntParse, bigIntStringify } from "../json.js";
 import ReJSONCommands from "../redis.js";
-import {
+import type {
   CachedMinimalChannel,
   CachedMinimalGuild,
   CachedMinimalRole,
