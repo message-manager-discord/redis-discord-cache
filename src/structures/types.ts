@@ -1,11 +1,12 @@
-import {
+import type {
   APIGuildCategoryChannel,
-  APIGuildChannel,
   APIGuildForumChannel,
+  APIGuildMediaChannel,
+  APIGuildStageVoiceChannel,
+  APIGuildVoiceChannel,
   APINewsChannel,
   APITextChannel,
   APIThreadChannel,
-  APIVoiceChannel,
   ChannelType,
   OverwriteType,
   Snowflake,
@@ -14,11 +15,13 @@ import {
 type GuildChannel =
   | APITextChannel
   | APINewsChannel
-  | APIVoiceChannel
+  | APIGuildVoiceChannel
+  | APIGuildStageVoiceChannel
   | APIGuildCategoryChannel
   | APIThreadChannel
   | APIGuildForumChannel
-  | APINewsChannel;
+  | APINewsChannel
+  | APIGuildMediaChannel;
 
 type CachedMinimalRole = {
   name: string;
@@ -109,26 +112,26 @@ interface CachedMinimalGuild {
 interface UnavailableGuild {
   unavailable: boolean;
 }
-export {
-  CachedMinimalGuild,
-  RolesObject,
-  CachedRolesObject,
-  ChannelsObject,
+export type {
   CachedChannelsObject,
-  MinimalChannel,
   CachedMinimalChannel,
-  NotThreadChannelTypes,
-  GuildTextChannelTypes,
-  GuildChannelTypes,
-  GuildThreadTypes,
-  NonThreadTextGuildChannelTypes,
-  NonTextGuildChannelTypes,
-  GuildVoiceChannelTypes,
-  DMChannelTypes,
-  MinimalRole,
+  CachedMinimalGuild,
   CachedMinimalRole,
+  CachedRolesObject,
   ChannelOverwrite,
   ChannelOverwritesObject,
-  UnavailableGuild,
+  ChannelsObject,
+  DMChannelTypes,
   GuildChannel,
+  GuildChannelTypes,
+  GuildTextChannelTypes,
+  GuildThreadTypes,
+  GuildVoiceChannelTypes,
+  MinimalChannel,
+  MinimalRole,
+  NonTextGuildChannelTypes,
+  NonThreadTextGuildChannelTypes,
+  NotThreadChannelTypes,
+  RolesObject,
+  UnavailableGuild,
 };

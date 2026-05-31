@@ -32,7 +32,6 @@ This class takes four options:
   - port: The port of the redis instance.
   - host: The hostname of the redis instance.
 - discord: An object containing the discord connection information.
-
   - token: The token of the discord bot.
   - presence: An object containing the presence information for the bot. See the [detritusjs docs for more info](https://socket.detritusjs.com/interfaces/gateway.presenceoptions)
   - shardId: id of shard, see [discord docs](https://discord.com/developers/docs/topics/gateway#sharding) for more info

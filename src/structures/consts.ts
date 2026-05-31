@@ -1,5 +1,4 @@
-// https://github.com/detritusjs/client/blob/b27cbaa5bfb48506b059be178da0e871b83ba95e/src/constants.ts#L917
-export const Permissions = Object.freeze({
+export const Permissions: Record<string, bigint> = Object.freeze({
   NONE: 0n,
   CREATE_INSTANT_INVITE: 1n << 0n,
   KICK_MEMBERS: 1n << 1n,
@@ -44,5 +43,5 @@ export const Permissions = Object.freeze({
 
 export const PERMISSIONS_ALL = Object.values(Permissions).reduce(
   (permissions: bigint, permission: bigint) => permissions | permission,
-  Permissions.NONE
+  Permissions.NONE,
 );

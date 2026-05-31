@@ -1,10 +1,11 @@
-import { APIThreadChannel, Snowflake } from "discord-api-types/v9";
-import {
+import type { APIThreadChannel, Snowflake } from "discord-api-types/v9";
+
+import type {
   CachedChannelsObject,
   CachedMinimalChannel,
   ChannelOverwritesObject,
   GuildChannel,
-} from "./types";
+} from "./types.js";
 
 const parseChannel = (channel: GuildChannel): CachedMinimalChannel => ({
   name: channel.name,
@@ -19,15 +20,15 @@ const parseChannel = (channel: GuildChannel): CachedMinimalChannel => ({
         deny: BigInt(overwrite.deny),
       },
     }),
-    {}
+    {},
   ),
   type: channel.type,
-  position: channel.position,
+  position: "position" in channel ? channel.position : undefined,
   threads: [],
 });
 
 const parseThreadChannel = (
-  thread: APIThreadChannel
+  thread: APIThreadChannel,
 ): CachedMinimalChannel => ({
   name: thread.name,
   parent_id: thread.parent_id,
@@ -38,7 +39,7 @@ const parseThreadChannel = (
 
 const parseChannels = (
   channelsData?: GuildChannel[],
-  threadsData?: APIThreadChannel[]
+  threadsData?: APIThreadChannel[],
 ): CachedChannelsObject => {
   let channels: CachedChannelsObject = {};
   if (threadsData) {
@@ -47,7 +48,7 @@ const parseChannels = (
         ...obj,
         [thread.id]: parseThreadChannel(thread),
       }),
-      channels
+      channels,
     );
   }
   const threadParentMap: Record<Snowflake, Snowflake[]> = {};
@@ -81,7 +82,7 @@ const parseChannels = (
 
 const mergeChannel = (
   oldData: CachedMinimalChannel,
-  newData: CachedMinimalChannel
+  newData: CachedMinimalChannel,
 ): CachedMinimalChannel => {
   return {
     threads: oldData.threads, // This is dependent on different events (not the channelUpdate event)
@@ -95,4 +96,4 @@ const mergeChannel = (
   };
 };
 
-export { parseChannels, parseChannel, parseThreadChannel, mergeChannel };
+export { mergeChannel, parseChannel, parseChannels, parseThreadChannel };

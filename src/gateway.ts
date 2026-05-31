@@ -1,19 +1,26 @@
-import { Gateway } from "detritus-client-socket";
-import { PresenceOptions } from "detritus-client-socket/lib/gateway";
-import { GatewayEventHandler } from "./handler";
-import Redis from "ioredis";
-import ReJSONCommands from "./redis";
-import { GatewayDispatchEvents } from "discord-api-types/gateway/v9";
-import { GatewayOpcodes, Snowflake } from "discord-api-types/v9";
-import { GatewayIntents } from "detritus-client-socket/lib/constants";
-import winston from "winston";
-import { createDefaultLogger } from "./logger";
-import { bigIntParse } from "./json";
-import { GatewayPackets } from "detritus-client-socket/lib/types";
 import { ShardClient } from "detritus-client";
+import { Constants, Gateway } from "detritus-client-socket";
+import { GatewayDispatchEvents } from "discord-api-types/gateway/v9";
+import type { Snowflake } from "discord-api-types/v9";
+import { GatewayOpcodes } from "discord-api-types/v9";
+import type { Redis as RedisType } from "ioredis";
+import { Redis } from "ioredis";
+import winston from "winston";
+
+import { GatewayEventHandler } from "./handler.js";
+import { bigIntParse } from "./json.js";
+import { createDefaultLogger } from "./logger.js";
+import ReJSONCommands from "./redis.js";
+
+type GatewayPacket = {
+  // TODO - investigate if this custom type can be removed
+  op: GatewayOpcodes;
+  t?: string;
+  d: unknown;
+};
 interface DiscordConfig {
   token: string;
-  presence?: PresenceOptions;
+  presence?: Gateway.PresenceOptions;
   shardCount?: number;
   shardId?: number;
 }
@@ -21,9 +28,7 @@ interface ParsedDiscordConfig extends DiscordConfig {
   shardCount: number;
 }
 
-type OnGatewayEventHandler = (options: {
-  name: GatewayPackets.Packet["t"];
-}) => any;
+type OnGatewayEventHandler = (options: { name: string | null }) => any;
 type OnRedisCommandHandler = (options: { name: string }) => any;
 type OnErrorHandler = (error: unknown) => any;
 interface CreateGatewayConnectionOptions {
@@ -43,7 +48,7 @@ interface CreateGatewayConnectionOptions {
 class GatewayClient {
   client: ShardClient;
   logger: winston.Logger;
-  redisConnection: Redis.Redis;
+  redisConnection: RedisType;
   redisCommands: ReJSONCommands;
   dispatchHandler: GatewayEventHandler;
   clientId: Snowflake | null;
@@ -51,7 +56,7 @@ class GatewayClient {
   shardCount: number;
   onGatewayEventMetrics: OnGatewayEventHandler | undefined;
   onErrorInPacketHandler: OnErrorHandler | undefined;
-  private _eventsPendingReady: GatewayPackets.Packet[];
+  private _eventsPendingReady: GatewayPacket[];
   constructor({
     redis,
     discord,
@@ -68,21 +73,24 @@ class GatewayClient {
         presence: {
           status: "online",
         },
-        intents: GatewayIntents.GUILDS,
+        intents: Constants.GatewayIntents.GUILDS,
         shardId: discord.shardId,
         shardCount: discord.shardCount,
       },
       cache: false,
     });
 
-    this.redisConnection = new Redis(redis.port, redis.host);
+    this.redisConnection = new Redis(
+      redis.port ?? 6379,
+      redis.host ?? "127.0.0.1",
+    );
     this.logger.info(
-      `Connected to redis on host: ${redis.host} port: ${redis.port}`
+      `Connected to redis on host: ${redis.host} port: ${redis.port}`,
     );
     this.redisCommands = new ReJSONCommands(
       this.redisConnection,
       logger,
-      metrics?.onRedisCommand
+      metrics?.onRedisCommand,
     );
 
     this.shardId = discord.shardId || 0;
@@ -91,7 +99,7 @@ class GatewayClient {
       this,
       this.redisCommands,
       this.logger,
-      this.shardId
+      this.shardId,
     );
     this.clientId = null;
     this.redisCommands.delete({ key: "clientId" });
@@ -120,12 +128,12 @@ class GatewayClient {
     setTimeout(() => this._setActive(), 15 * 1000);
   }
 
-  async handlePacket(packet: GatewayPackets.Packet) {
+  async handlePacket(packet: GatewayPacket) {
     try {
       if (packet.op === GatewayOpcodes.Dispatch) {
         const { d: data, t: name } = packet;
 
-        if (name in this.dispatchHandler) {
+        if (typeof name === "string" && name in this.dispatchHandler) {
           if (name === GatewayDispatchEvents.Ready) {
             try {
               (this.dispatchHandler as any)[name](data, this.client);
@@ -135,7 +143,7 @@ class GatewayClient {
             return;
           } else if (!this.isReady) {
             this.logger.debug(
-              `Waiting for ready to handle websocket event ${name}`
+              `Waiting for ready to handle websocket event ${name}`,
             );
             // Events shouldn't be processed until we have a clientId (the client is ready)
             this._eventsPendingReady.push(packet);
@@ -148,7 +156,7 @@ class GatewayClient {
             }
           }
         }
-        if (this.onGatewayEventMetrics) {
+        if (this.onGatewayEventMetrics && typeof name === "string") {
           this.onGatewayEventMetrics({ name });
         }
       }
@@ -172,7 +180,7 @@ class GatewayClient {
 */
     this.logger.debug("Checking shard count");
     const shardCount = bigIntParse(
-      await this.redisCommands.get({ key: "shardCount" })
+      await this.redisCommands.get({ key: "shardCount" }),
     );
     if (!shardCount) {
       await this.redisCommands.set({
@@ -181,7 +189,7 @@ class GatewayClient {
       });
     } else if (shardCount !== this.shardCount) {
       throw new Error(
-        "Shard count does not match previous shard count. Please clear the redis cache."
+        "Shard count does not match previous shard count. Please clear the redis cache.",
       );
     }
 
@@ -201,7 +209,9 @@ class GatewayClient {
     });
 
     this.client.on("gatewayReady", () =>
-      this.logger.info(`Connected to Discord Gateway on shard: ${this.shardId}`)
+      this.logger.info(
+        `Connected to Discord Gateway on shard: ${this.shardId}`,
+      ),
     );
 
     const onKillOrClose = (event: any) => {
@@ -213,7 +223,10 @@ class GatewayClient {
     this.client.on("killed", onKillOrClose);
     this.client.gateway.on("close", onKillOrClose);
     this.client.on("warn", (error) =>
-      this.logger.error(`Client warn occurred on shard: ${this.shardId}`, error)
+      this.logger.error(
+        `Client warn occurred on shard: ${this.shardId}`,
+        error,
+      ),
     );
 
     this.client.run();
@@ -223,7 +236,7 @@ class GatewayClient {
     return JSON.parse(
       await this.redisCommands.nonJSONget({
         key: `shard:${this.shardId || 0}:guildCount`,
-      })
+      }),
     );
   }
 
