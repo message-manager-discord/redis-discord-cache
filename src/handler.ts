@@ -175,7 +175,6 @@ class GatewayEventHandler {
     data: GatewayChannelUpdateDispatchData,
   ) {
     // Overwrite since all data used is included
-    data.type;
     if (!data.guild_id) {
       return; // DMs are not used and therefore would be a waste of memory
     }

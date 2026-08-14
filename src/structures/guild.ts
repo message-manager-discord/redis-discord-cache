@@ -271,7 +271,7 @@ export default class Guild extends BaseStructure<
     } catch (error) {
       if (error instanceof GuildNotFound) {
         channel = null;
-        this.name; // This *should* throw is guild is not found
+        await this.name; // This *should* throw is guild is not found
       } else {
         throw error;
       }
@@ -328,9 +328,9 @@ export default class Guild extends BaseStructure<
       throw new Error("Channel not cached!");
     }
     if (
-      channel.type === ChannelType.GuildNewsThread ||
-      channel.type === ChannelType.GuildPrivateThread ||
-      channel.type === ChannelType.GuildPublicThread
+      channel.type === ChannelType.AnnouncementThread ||
+      channel.type === ChannelType.PrivateThread ||
+      channel.type === ChannelType.PublicThread
     ) {
       channel = await this.getChannel(channel.parent_id!);
       if (!channel) {
@@ -469,7 +469,7 @@ const parseRolesData = (roles: APIRole[]): CachedRolesObject => {
 const parseRoleData = (role: APIRole): CachedMinimalRole => ({
   name: role.name,
   icon: role.icon,
-  color: role.color,
+  colors: role.colors,
   permissions: BigInt(role.permissions),
   position: role.position,
   unicode_emoji: role.unicode_emoji,

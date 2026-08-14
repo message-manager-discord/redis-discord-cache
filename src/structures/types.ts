@@ -5,6 +5,7 @@ import type {
   APIGuildStageVoiceChannel,
   APIGuildVoiceChannel,
   APINewsChannel,
+  APIRoleColors,
   APITextChannel,
   APIThreadChannel,
   ChannelType,
@@ -27,7 +28,7 @@ type CachedMinimalRole = {
   name: string;
   icon?: string | null;
   unicode_emoji?: string | null;
-  color: number;
+  colors: APIRoleColors;
   permissions: bigint;
   position: number;
 };
@@ -47,13 +48,13 @@ type NonTextGuildChannelTypes =
   | ChannelType.GuildForum;
 
 type NonThreadTextGuildChannelTypes =
-  | ChannelType.GuildNews
+  | ChannelType.GuildAnnouncement
   | ChannelType.GuildText;
 
 type GuildThreadTypes =
-  | ChannelType.GuildNewsThread
-  | ChannelType.GuildPrivateThread
-  | ChannelType.GuildPublicThread;
+  | ChannelType.AnnouncementThread
+  | ChannelType.PrivateThread
+  | ChannelType.PublicThread;
 
 type GuildChannelTypes =
   | NonTextGuildChannelTypes

@@ -6,7 +6,7 @@ const bigIntStringify = (data: any) =>
 const bigIntParse = (data: any) =>
   JSON.parse(data, (key, value) => {
     if (typeof value === "string" && value.startsWith("BIGINT::")) {
-      return BigInt(value.substr(8));
+      return BigInt(value.substring(8));
     }
     return value;
   });

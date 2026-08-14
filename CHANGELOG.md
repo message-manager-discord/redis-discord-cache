@@ -15,3 +15,11 @@ Major refactor to modernize codebase, dependencies, and distribution:
 ## Version 0.1.1
 
 - Added ChannelNoteFound, GuildNotFound, GuildUnavailable, ShardInactive, MinimalChannel, MinimalRole, RolesObject to default exports
+
+# Version 0.2.0
+
+- Updated Discord channel types to their current names.
+- Updated cached role data to use the `colors` object instead of the deprecated `color` property. **This is a breaking change for consumers using `CachedMinimalRole`.**
+- Added typed ESLint project support and deprecated API detection.
+- Replaced deprecated `substr()` usage with `substring()`.
+- Fixed an asynchronous guild lookup to properly await the result.

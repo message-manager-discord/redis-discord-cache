@@ -11,6 +11,12 @@ export default [
   {
     files: ["**/*.ts"],
 
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+      },
+    },
+
     plugins: {
       "simple-import-sort": simpleImportSort,
       "unused-imports": unusedImports,
@@ -23,6 +29,7 @@ export default [
 
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/no-deprecated": "error",
     },
   },
 
