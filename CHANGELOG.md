@@ -11,3 +11,7 @@ Major refactor to modernize codebase, dependencies, and distribution:
 - Migrated to ESM: The library is published as an ECMAScript module. All imports use .js extensions.
 - Upgraded dependencies: ioredis, detritus-client, discord-api-types, winston, TypeScript, and build/dev tooling are updated to recent versions.
 - Deep/internal imports are no longer supported.
+
+## Version 0.1.1
+
+- Added ChannelNoteFound, GuildNotFound, GuildUnavailable, ShardInactive, MinimalChannel, MinimalRole, RolesObject to default exports
