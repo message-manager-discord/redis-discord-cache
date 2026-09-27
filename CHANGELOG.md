@@ -23,3 +23,7 @@ Major refactor to modernize codebase, dependencies, and distribution:
 - Added typed ESLint project support and deprecated API detection.
 - Replaced deprecated `substr()` usage with `substring()`.
 - Fixed an asynchronous guild lookup to properly await the result.
+
+# Version 0.2.1
+
+- Added get shardsActive to guild manager

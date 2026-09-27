@@ -109,6 +109,30 @@ class GuildManager {
     // then run this again - every 15 seconds
     setTimeout(() => this._checkShardsActive(), 15 * 1000);
   }
+  get shardsActive(): {
+    isValid: boolean;
+    shards: Record<number, boolean>;
+  } {
+    const shardCount = this._shardCountCache.count;
+
+    if (shardCount === undefined) {
+      return {
+        isValid: false,
+        shards: {},
+      };
+    }
+
+    const shards: Record<number, boolean> = {};
+
+    for (let shardId = 0; shardId < shardCount; shardId++) {
+      shards[shardId] = !this._shardsInactiveCache.includes(shardId.toString());
+    }
+
+    return {
+      isValid: true,
+      shards,
+    };
+  }
 
   async getShardCount(): Promise<number> {
     return bigIntParse(await this._redis.get({ key: "shardCount" })) as number;
