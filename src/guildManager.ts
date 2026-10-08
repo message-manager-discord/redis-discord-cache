@@ -18,23 +18,46 @@ class GuildManager {
     this._checkShardsActive();
   }
 
-  async _getShardCountCached(): Promise<number> {
+  /**
+   * Get the current shard count.
+   *
+   * Uses the cached value for up to 5 minutes unless skipCache is true.
+   * A fresh lookup always updates the cache.
+   */
+  async getShardCount(skipCache = false): Promise<number> {
     const now = Date.now();
-    // force a check every 5 minutes
+
     if (
+      !skipCache &&
       this._shardCountCache.count &&
       this._shardCountCache.lastChecked &&
       now - this._shardCountCache.lastChecked < 5 * 60 * 1000
     ) {
       return this._shardCountCache.count;
     }
-    this._shardCountCache.count = await this.getShardCount();
+
+    const count = bigIntParse(
+      await this._redis.get({ key: "shardCount" }),
+    ) as number;
+
+    this._shardCountCache.count = count;
     this._shardCountCache.lastChecked = now;
-    return this._shardCountCache.count;
+
+    return count;
   }
 
+  /**
+   * @deprecated Use getShardCount() instead.
+   */
+  async _getShardCountCached(): Promise<number> {
+    return this.getShardCount();
+  }
+
+  /**
+   * @deprecated Use getShardCount() instead.
+   */
   get shardCountCached(): Promise<number> {
-    return this._getShardCountCached();
+    return this.getShardCount();
   }
 
   private _getGuild(id: Snowflake): Guild {
@@ -84,8 +107,10 @@ class GuildManager {
     return result;
   }
 
-  private async _checkShardsActive() {
-    const shardCount = await this.getShardCount();
+  private async _checkShardsActive(): Promise<void> {
+    // Always get a fresh shard count here so that changes in shard count
+    // are reflected immediately in shardsActive.
+    const shardCount = await this.getShardCount(true);
     for (let shardId = 0; shardId < shardCount; shardId++) {
       const shardIdString = shardId.toString();
       const shardIsActive = JSON.parse(
@@ -134,9 +159,6 @@ class GuildManager {
     };
   }
 
-  async getShardCount(): Promise<number> {
-    return bigIntParse(await this._redis.get({ key: "shardCount" })) as number;
-  }
   async getGuildCount(): Promise<number> {
     let guildCount = 0;
     const shardCount = await this.getShardCount();
